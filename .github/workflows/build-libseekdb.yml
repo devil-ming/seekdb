@@ -11,7 +11,7 @@
 # Optional: add notarization step and APPLE_ID/PASSWORD/TEAM_ID secrets to notarize the zip.
 # Artifacts: three platform zips (linux-x64, linux-arm64, darwin-arm64); combined artifact libseekdb-all-platforms; optional S3 upload when DESTINATION_TARGET_PATH or AWS_S3_BUCKET and credentials are set.
 name: Build libseekdb
-run-name: Build libseekdb for ${{ env.COMMIT_SHA }}
+run-name: Build libseekdb for ${{ github.event_name == 'workflow_dispatch' && inputs.ref != '' && inputs.ref || (github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha) }}
 
 # Triggers on all branches; S3 upload runs only on main, master, develop, *.*.x, integration/* (see release-artifacts job).
 on:
@@ -36,15 +36,13 @@ on:
       - "docs/**"
 
 env:
-  # Commit/ref actually built: workflow_dispatch input ref, PR head, or event commit (push)
   COMMIT_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.ref != '' && inputs.ref || (github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha) }}
   AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
-  # S3 upload only on these branches (push); workflow_dispatch uploads when run
   UPLOAD_S3: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/integration/') || contains(github.ref, '.x'))) }}
   BUCKET_NAME: ${{ vars.AWS_S3_BUCKET || 'oceanbase-seekdb-builds' }}
-  DESTINATION_TARGET_PATH: ${{ vars.DESTINATION_TARGET_PATH || format('s3://oceanbase-seekdb-builds/libseekdb/all_commits/{0}', env.COMMIT_SHA) }}
+  DESTINATION_TARGET_PATH: ${{ vars.DESTINATION_TARGET_PATH || format('s3://oceanbase-seekdb-builds/libseekdb/all_commits/{0}', github.event_name == 'workflow_dispatch' && inputs.ref != '' && inputs.ref || (github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha)) }}
   S3_BUCKET: ${{ vars.AWS_S3_BUCKET || 'oceanbase-seekdb-builds' }}
-  S3_PREFIX: libseekdb/all_commits/${{ env.COMMIT_SHA }}
+  S3_PREFIX: libseekdb/all_commits/${{ github.event_name == 'workflow_dispatch' && inputs.ref != '' && inputs.ref || (github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha) }}
 
 jobs:
   # ---------- Build libseekdb on Linux / macOS ----------
