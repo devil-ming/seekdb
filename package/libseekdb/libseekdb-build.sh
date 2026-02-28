@@ -194,8 +194,8 @@ echo "[BUILD] Created: $OUTPUT_ZIP"
 
 # Restore build dir to pristine dylib on macOS so next run does not trigger rebuild
 if [[ -n "${SAVED_PRISTINE_DYLIB:-}" && -f "${SAVED_PRISTINE_DYLIB}" ]]; then
-  echo "[BUILD] Restoring build dir to pristine dylib (avoid rebuild on next run)..."
   cp "$SAVED_PRISTINE_DYLIB" "$WORK_DIR/libseekdb.dylib"
   rm -rf "$WORK_DIR/libs"
   rm -f "$SAVED_PRISTINE_DYLIB"
+  echo "[BUILD] Restored build dir to pristine dylib (cleanup for next run)."
 fi

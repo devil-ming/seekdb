@@ -305,7 +305,7 @@ jobs:
         run: |
           echo -e '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n  <key>com.apple.security.cs.disable-library-validation</key>\n  <true/>\n</dict>\n</plist>' > package/libseekdb/entitlements.plist
 
-      # Only import certificate on main repo so forks do not need these secrets.
+      # Only import certificate on main repo; script skips when cert empty (ad-hoc signing used).
       - name: Import certificate (macOS)
         if: github.repository == 'oceanbase/seekdb'
         env:
