@@ -1803,15 +1803,59 @@ static int do_seekdb_execute_inner(ExecuteParams* params) {
                 field.catalog = "def";
                 field.catalog_length = 3;
                 
-                // Extract type information (align with MySQL protocol type map where applicable)
+                // Extract type information: map ObObjType to SeekdbFieldType (seekdb.h).
+                // OceanBase ObObjType (e.g. ObFloatType=11, ObDoubleType=12) does not match SEEKDB_TYPE (5, 6);
+                // bindings (e.g. js-bindings) rely on SEEKDB_TYPE_FLOAT/DOUBLE (5/6) to return number.
                 if (!ob_field.type_.is_null()) {
                     oceanbase::common::ObObjType obj_type = ob_field.type_.get_type();
                     if (oceanbase::common::ob_is_valid_obj_type(obj_type)) {
                         if (obj_type == oceanbase::common::ObCollectionSQLType) {
-                            // VECTOR: MySQL protocol sends as MYSQL_TYPE_STRING; C ABI report as SEEKDB_TYPE_STRING
-                            field.type = static_cast<int32_t>(SEEKDB_TYPE_STRING);
+                            field.type = static_cast<int32_t>(SEEKDB_TYPE_VECTOR);
+                        } else if (obj_type == oceanbase::common::ObFloatType || obj_type == oceanbase::common::ObUFloatType) {
+                            field.type = static_cast<int32_t>(SEEKDB_TYPE_FLOAT);
+                        } else if (obj_type == oceanbase::common::ObDoubleType || obj_type == oceanbase::common::ObUDoubleType) {
+                            field.type = static_cast<int32_t>(SEEKDB_TYPE_DOUBLE);
                         } else {
-                            field.type = static_cast<int32_t>(obj_type);
+                            // Map other ObObjType to SEEKDB_TYPE where they align or have a clear mapping
+                            switch (obj_type) {
+                                case oceanbase::common::ObNullType:        field.type = static_cast<int32_t>(SEEKDB_TYPE_NULL); break;
+                                case oceanbase::common::ObTinyIntType:      field.type = static_cast<int32_t>(SEEKDB_TYPE_TINY); break;
+                                case oceanbase::common::ObSmallIntType:     field.type = static_cast<int32_t>(SEEKDB_TYPE_SHORT); break;
+                                case oceanbase::common::ObMediumIntType:
+                                case oceanbase::common::ObInt32Type:        field.type = static_cast<int32_t>(SEEKDB_TYPE_LONG); break;
+                                case oceanbase::common::ObIntType:          field.type = static_cast<int32_t>(SEEKDB_TYPE_LONGLONG); break;
+                                case oceanbase::common::ObUTinyIntType:     field.type = static_cast<int32_t>(SEEKDB_TYPE_TINY); break;
+                                case oceanbase::common::ObUSmallIntType:     field.type = static_cast<int32_t>(SEEKDB_TYPE_SHORT); break;
+                                case oceanbase::common::ObUMediumIntType:
+                                case oceanbase::common::ObUInt32Type:
+                                case oceanbase::common::ObUInt64Type:       field.type = static_cast<int32_t>(SEEKDB_TYPE_LONGLONG); break;
+                                case oceanbase::common::ObDateTimeType:     field.type = static_cast<int32_t>(SEEKDB_TYPE_DATETIME); break;
+                                case oceanbase::common::ObTimestampType:   field.type = static_cast<int32_t>(SEEKDB_TYPE_TIMESTAMP); break;
+                                case oceanbase::common::ObDateType:         field.type = static_cast<int32_t>(SEEKDB_TYPE_DATE); break;
+                                case oceanbase::common::ObTimeType:         field.type = static_cast<int32_t>(SEEKDB_TYPE_TIME); break;
+                                case oceanbase::common::ObYearType:         field.type = static_cast<int32_t>(SEEKDB_TYPE_LONGLONG); break;
+                                case oceanbase::common::ObVarcharType:
+                                case oceanbase::common::ObCharType:
+                                case oceanbase::common::ObHexStringType:
+                                case oceanbase::common::ObNumberType:
+                                case oceanbase::common::ObUNumberType:
+                                case oceanbase::common::ObTinyTextType:
+                                case oceanbase::common::ObTextType:
+                                case oceanbase::common::ObMediumTextType:
+                                case oceanbase::common::ObLongTextType:
+                                case oceanbase::common::ObJsonType:
+                                case oceanbase::common::ObDecimalIntType:   field.type = static_cast<int32_t>(SEEKDB_TYPE_STRING); break;
+                                case oceanbase::common::ObBitType:
+                                case oceanbase::common::ObEnumType:
+                                case oceanbase::common::ObSetType:          field.type = static_cast<int32_t>(SEEKDB_TYPE_STRING); break;
+                                case oceanbase::common::ObGeometryType:
+                                case oceanbase::common::ObUserDefinedSQLType:
+                                case oceanbase::common::ObMySQLDateType:
+                                case oceanbase::common::ObMySQLDateTimeType:
+                                case oceanbase::common::ObTimestampLTZType:
+                                case oceanbase::common::ObTimestampNanoType:
+                                default:                                    field.type = static_cast<int32_t>(SEEKDB_TYPE_STRING); break;
+                            }
                         }
                     }
                 }
