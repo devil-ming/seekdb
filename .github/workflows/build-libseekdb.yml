@@ -146,6 +146,12 @@ jobs:
         with:
           go-version: '1.21'
 
+      - name: Setup Java (Linux)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Test Node.js FFI binding (Linux)
         run: |
           cd unittest/include/nodejs
@@ -174,12 +180,6 @@ jobs:
           PATH=$(echo "$PATH" | tr ':' '\n' | grep -v 'deps/3rd' | tr '\n' ':' | sed 's/:$//')
           cd unittest/include/go
           bash test.sh
-
-      - name: Setup Java (Linux)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
 
       - name: Test Java binding (Linux)
         run: |
@@ -283,6 +283,12 @@ jobs:
         with:
           go-version: '1.21'
 
+      - name: Setup Java (macOS)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Test Node.js FFI binding (macOS)
         run: |
           cd unittest/include/nodejs
@@ -311,12 +317,6 @@ jobs:
           PATH=$(echo "$PATH" | tr ':' '\n' | grep -v 'deps/3rd' | tr '\n' ':' | sed 's/:$//')
           cd unittest/include/go
           bash test.sh
-
-      - name: Setup Java (macOS)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
 
       - name: Test Java binding (macOS)
         run: |
