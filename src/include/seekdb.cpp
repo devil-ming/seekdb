@@ -311,6 +311,8 @@ static char g_embedded_base_dir[PATH_MAX] = {0};  // Absolute path: opened db pa
 static bool g_closing = false;  // Flag to indicate we're in closing process
 static struct sigaction g_old_segv_handler;  // Store original SIGSEGV handler
 static bool g_segv_handler_installed = false;
+static struct sigaction g_old_sigabrt_handler;  // Store original SIGABRT handler
+static bool g_sigabrt_handler_installed = false;
 
 // Set when embedded DB was ever successfully opened; never cleared.
 // Used by the signal handler so we can recognize cleanup segfaults even when
@@ -333,6 +335,20 @@ static void segv_handler_during_close(int sig, siginfo_t* info, void* context) {
         sigaction(SIGSEGV, &g_old_segv_handler, nullptr);
         g_segv_handler_installed = false;
         raise(SIGSEGV);
+    }
+}
+
+// Signal handler for SIGABRT during cleanup
+// ob_abort() triggers SIGABRT during static destructors (e.g. Node.js N-API on macOS).
+// Catch it and exit gracefully when we're in the embedded DB cleanup path.
+static void sigabrt_handler_during_close(int sig, siginfo_t* info, void* context) {
+    if (g_closing || g_embedded_opened || g_embedded_ever_opened) {
+        _exit(0);
+    }
+    if (g_sigabrt_handler_installed) {
+        sigaction(SIGABRT, &g_old_sigabrt_handler, nullptr);
+        g_sigabrt_handler_installed = false;
+        raise(SIGABRT);
     }
 }
 
@@ -459,6 +475,10 @@ static void seekdb_library_init() {
     
     if (sigaction(SIGSEGV, &sa, &g_old_segv_handler) == 0) {
         g_segv_handler_installed = true;
+    }
+    sa.sa_sigaction = sigabrt_handler_during_close;
+    if (sigaction(SIGABRT, &sa, &g_old_sigabrt_handler) == 0) {
+        g_sigabrt_handler_installed = true;
     }
 }
 
@@ -1055,15 +1075,19 @@ void seekdb_close(void) {
         // This allows the signal handler to recognize cleanup-related segfaults
         g_closing = true;
         
-        // Re-install our SIGSEGV handler so it is active during atexit/static destructors.
+        // Re-install our SIGSEGV and SIGABRT handlers so they are active during atexit/static destructors.
         // Other runtimes (e.g. Rust, Node) may overwrite the handler; after seekdb_close()
-        // the process often exits and C++ destructors can trigger segfaults in worker threads.
+        // the process often exits and C++ destructors can trigger segfaults or ob_abort() in worker threads.
+        struct sigaction sa;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = SA_SIGINFO;
         if (g_segv_handler_installed) {
-            struct sigaction sa;
             sa.sa_sigaction = segv_handler_during_close;
-            sigemptyset(&sa.sa_mask);
-            sa.sa_flags = SA_SIGINFO;
             (void)sigaction(SIGSEGV, &sa, &g_old_segv_handler);
+        }
+        if (g_sigabrt_handler_installed) {
+            sa.sa_sigaction = sigabrt_handler_during_close;
+            (void)sigaction(SIGABRT, &sa, &g_old_sigabrt_handler);
         }
         
         // Note: We skip observer.destroy() because:
