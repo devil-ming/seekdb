@@ -313,6 +313,8 @@ static struct sigaction g_old_segv_handler;  // Store original SIGSEGV handler
 static bool g_segv_handler_installed = false;
 static struct sigaction g_old_sigabrt_handler;  // Store original SIGABRT handler
 static bool g_sigabrt_handler_installed = false;
+static struct sigaction g_old_sigbus_handler;  // Store original SIGBUS handler
+static bool g_sigbus_handler_installed = false;
 
 // Set when embedded DB was ever successfully opened; never cleared.
 // Used by the signal handler so we can recognize cleanup segfaults even when
@@ -349,6 +351,20 @@ static void sigabrt_handler_during_close(int sig, siginfo_t* info, void* context
         sigaction(SIGABRT, &g_old_sigabrt_handler, nullptr);
         g_sigabrt_handler_installed = false;
         raise(SIGABRT);
+    }
+}
+
+// Signal handler for SIGBUS during cleanup
+// SIGBUS can occur during static destructors (e.g. Rust FFI on macOS).
+// Catch it and exit gracefully when we're in the embedded DB cleanup path.
+static void sigbus_handler_during_close(int sig, siginfo_t* info, void* context) {
+    if (g_closing || g_embedded_opened || g_embedded_ever_opened) {
+        _exit(0);
+    }
+    if (g_sigbus_handler_installed) {
+        sigaction(SIGBUS, &g_old_sigbus_handler, nullptr);
+        g_sigbus_handler_installed = false;
+        raise(SIGBUS);
     }
 }
 
@@ -479,6 +495,10 @@ static void seekdb_library_init() {
     sa.sa_sigaction = sigabrt_handler_during_close;
     if (sigaction(SIGABRT, &sa, &g_old_sigabrt_handler) == 0) {
         g_sigabrt_handler_installed = true;
+    }
+    sa.sa_sigaction = sigbus_handler_during_close;
+    if (sigaction(SIGBUS, &sa, &g_old_sigbus_handler) == 0) {
+        g_sigbus_handler_installed = true;
     }
 }
 
@@ -1075,9 +1095,9 @@ void seekdb_close(void) {
         // This allows the signal handler to recognize cleanup-related segfaults
         g_closing = true;
         
-        // Re-install our SIGSEGV and SIGABRT handlers so they are active during atexit/static destructors.
+        // Re-install our SIGSEGV, SIGABRT and SIGBUS handlers so they are active during atexit/static destructors.
         // Other runtimes (e.g. Rust, Node) may overwrite the handler; after seekdb_close()
-        // the process often exits and C++ destructors can trigger segfaults or ob_abort() in worker threads.
+        // the process often exits and C++ destructors can trigger segfaults, ob_abort() or bus errors in worker threads.
         struct sigaction sa;
         sigemptyset(&sa.sa_mask);
         sa.sa_flags = SA_SIGINFO;
@@ -1088,6 +1108,10 @@ void seekdb_close(void) {
         if (g_sigabrt_handler_installed) {
             sa.sa_sigaction = sigabrt_handler_during_close;
             (void)sigaction(SIGABRT, &sa, &g_old_sigabrt_handler);
+        }
+        if (g_sigbus_handler_installed) {
+            sa.sa_sigaction = sigbus_handler_during_close;
+            (void)sigaction(SIGBUS, &sa, &g_old_sigbus_handler);
         }
         
         // Note: We skip observer.destroy() because:
