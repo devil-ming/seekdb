@@ -21,7 +21,6 @@
 #include "share/vector_index/ob_vector_index_util.h"
 #include "sql/das/ob_das_dml_vec_iter.h"
 #include "lib/roaringbitmap/ob_rb_memory_mgr.h"
-#include "share/ls/ob_ls_operator.h"
 #include "share/vector_index/ob_plugin_vector_index_utils.h"
 #include "share/allocator/ob_tenant_vector_allocator.h"
 
@@ -1299,7 +1298,6 @@ int ObPluginVectorIndexAdaptor::handle_insert_embedded_table_rows(blocksstable::
     }
     if (OB_SUCC(ret) && incr_vid_count > 0) {
       lib::ObMallocHookAttrGuard malloc_guard(lib::ObMemAttr(tenant_id_, "VIndexVsagADP"));
-      TCWLockGuard lock_guard(incr_data_->mem_data_rwlock_);
       if (OB_FAIL(obvectorutil::add_index(incr_data_->index_,
                                               vectors,
                                               incr_vids,
@@ -1307,13 +1305,12 @@ int ObPluginVectorIndexAdaptor::handle_insert_embedded_table_rows(blocksstable::
                                               extra_info_buf_ptr,
                                               incr_vid_count))) {
         LOG_WARN("failed to add index.", K(ret), K(dim), K(row_count));
-      } else {
-        incr_data_->set_vid_bound(vid_bound);
       }
     }
     if (OB_SUCC(ret)) {
       lib::ObMallocHookAttrGuard malloc_guard(lib::ObMemAttr(tenant_id_, "VIBitmapADPH"));
       TCWLockGuard lock_guard(incr_data_->bitmap_rwlock_);
+      incr_data_->set_vid_bound(vid_bound);
       for (int64_t i = 0; OB_SUCC(ret) && i < incr_vid_count; i++) {
         ROARING_TRY_CATCH(roaring::api::roaring64_bitmap_add(incr_data_->bitmap_->insert_bitmap_, incr_vids[i]));
       }
@@ -1580,7 +1577,6 @@ int ObPluginVectorIndexAdaptor::insert_rows(blocksstable::ObDatumRow *rows,
     if (OB_SUCC(ret) && incr_vid_count > 0) {
       lib::ObMallocHookAttrGuard malloc_guard(lib::ObMemAttr(tenant_id_, "VIndexVsagADP"));
       lib::ObLightBacktraceGuard light_backtrace_guard(false);
-      TCWLockGuard lock_guard(incr_data_->mem_data_rwlock_);
       if (is_sparse_vector_index_type()) {
         if (OB_FAIL(obvectorutil::add_index(incr_data_->index_,
                                               lens,
@@ -1591,8 +1587,6 @@ int ObPluginVectorIndexAdaptor::insert_rows(blocksstable::ObDatumRow *rows,
                                               extra_info_buf_ptr
                                               ))) {
           LOG_WARN("failed to add sparse index.", K(ret), K(dim), K(row_count));
-        } else {
-          incr_data_->set_vid_bound(vid_bound);
         }
       } else {
         if (OB_FAIL(obvectorutil::add_index(incr_data_->index_,
@@ -1602,14 +1596,13 @@ int ObPluginVectorIndexAdaptor::insert_rows(blocksstable::ObDatumRow *rows,
                                               extra_info_buf_ptr,
                                               incr_vid_count))) {
           LOG_WARN("failed to add index.", K(ret), K(dim), K(row_count));
-        } else {
-          incr_data_->set_vid_bound(vid_bound);
         }
       }
     } 
     if (OB_SUCC(ret)) {
       lib::ObMallocHookAttrGuard malloc_guard(lib::ObMemAttr(tenant_id_, "VIBitmapADPH"));
       TCWLockGuard lock_guard(incr_data_->bitmap_rwlock_);
+      incr_data_->set_vid_bound(vid_bound);
       for (int64_t i = 0; OB_SUCC(ret) && i < incr_vid_count; i++) {
         ROARING_TRY_CATCH(roaring::api::roaring64_bitmap_add(incr_data_->bitmap_->insert_bitmap_, incr_vids[i]));
       }
@@ -2300,9 +2293,9 @@ int ObPluginVectorIndexAdaptor::write_into_delta_mem(ObVectorQueryAdaptorResultC
         for (int64_t i = 0; OB_SUCC(ret) && i < count; i++) {
           ROARING_TRY_CATCH(roaring::api::roaring64_bitmap_add(incr_data_->bitmap_->insert_bitmap_, vids[i]));
         }
-      }
-      if (OB_SUCC(ret)) {
-        incr_data_->set_vid_bound(vid_bound);
+        if (OB_SUCC(ret)) {
+          incr_data_->set_vid_bound(vid_bound);
+        }
       }
       LOG_TRACE("write into delta mem.", K(ret), K(ctx->get_dim()), K(count));
     }
@@ -2849,11 +2842,11 @@ int ObPluginVectorIndexAdaptor::serialize(ObIAllocator *allocator, ObOStreamBuf:
   return ret;
 }
 
-int ObPluginVectorIndexAdaptor::renew_single_snap_index()
+int ObPluginVectorIndexAdaptor::renew_single_snap_index(bool mem_saving_mode)
 {
   int ret = OB_SUCCESS;
   ObVectorIndexAlgorithmType index_type = get_snap_index_type();
-  if (index_type == VIAT_HNSW_BQ) {
+  if (mem_saving_mode) {
     ObString invalid_prefix("renew");
     if (OB_ISNULL(snap_data_)) {
       ret = OB_ERR_UNEXPECTED;

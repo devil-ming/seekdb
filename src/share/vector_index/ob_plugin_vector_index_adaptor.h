@@ -40,6 +40,7 @@ namespace share
 {
 struct ObPluginVectorIndexTaskCtx;
 class ObVsagMemContext;
+class ObPluginVectorIndexMgr;
 
 struct ObVectorIndexInfo
 {
@@ -365,6 +366,7 @@ public:
     is_post_with_filter_ = false;
     ob_sparse_drop_ratio_search_ = 0;
     n_candidate_ = 0;
+    only_complete_data_ = false;
   }
   TO_STRING_KV(K_(query_limit), K_(query_order), K_(ef_search), K_(query_vector), K_(query_scn), K_(ob_sparse_drop_ratio_search), K_(n_candidate));
 
@@ -600,7 +602,7 @@ public:
     }
   }
 
-  int renew_single_snap_index();
+  int renew_single_snap_index(bool mem_saving_mode);
   int set_adaptor_ctx_flag(ObVectorQueryAdaptorResultContext *ctx);
 
   ObString &get_index_identity() { return index_identity_; };

@@ -380,7 +380,6 @@ int ObDASHNSWScanIter::inner_reuse()
   vec_op_alloc_.reset();
   query_cond_.reset();
   go_brute_force_ = false;
-  only_complete_data_ = false;
 
   if (OB_SUCC(ret) && OB_FAIL(set_vec_index_param(vec_aux_ctdef_->vec_index_param_))) {
     LOG_WARN("failed to set vec index param", K(ret));
@@ -849,7 +848,6 @@ int ObDASHNSWScanIter::reset_filter_path()
   } else {
     query_cond_.reset();
     go_brute_force_ = false;
-    only_complete_data_ = false;
     can_retry_ = false;
     if (OB_NOT_NULL(tmp_adaptor_vid_iter_)) {
       tmp_adaptor_vid_iter_->reset();
@@ -1515,9 +1513,10 @@ int ObDASHNSWScanIter::process_adaptor_state_pre_filter(
     if (OB_FAIL(process_adaptor_state_pre_filter_brute_force(ada_ctx, adaptor, brute_vids, brute_cnt, need_complete_data, true))) {
       LOG_WARN("hnsw pre filter(brute force) failed to query result.", K(ret));
     } else if (need_complete_data) {
-      only_complete_data_ = true;
+      query_cond_.only_complete_data_ = true;
       if (OB_FAIL(process_adaptor_state_post_filter(ada_ctx, adaptor, is_vectorized))) {
         LOG_WARN("failed to process adaptor state post filter", K(ret));
+      } else if (OB_FALSE_IT(need_complete_data = false)) {
       } else if (OB_FAIL(process_adaptor_state_pre_filter_brute_force(ada_ctx, adaptor, brute_vids, brute_cnt, need_complete_data, false))) {
         LOG_WARN("hnsw pre filter(brute force) failed to query result.", K(ret));
       }
@@ -2914,7 +2913,6 @@ int ObDASHNSWScanIter::post_query_vid_with_filter(
         } else if (need_cnt_next > 0) {
           float need_ratio = static_cast<float>(need_cnt_next) / static_cast<float>(added_cnt);
           float select_ratio = static_cast<float>(added_cnt) / static_cast<float>(unfiltered_vid_cnt);
-          int need_res_cnt = select_ratio > 0 ? static_cast<int64_t>(std::ceil(need_cnt_next / select_ratio)) : need_cnt_next;
           uint32_t new_limit = 0;
           int64_t new_ef = old_ef;
           if (added_cnt == 0) {
@@ -2924,7 +2922,8 @@ int ObDASHNSWScanIter::post_query_vid_with_filter(
             new_ef = new_ef > VSAG_MAX_EF_SEARCH ? VSAG_MAX_EF_SEARCH : new_ef;
             query_cond_.is_last_search_ = false;
           } else {
-            int need_res_cnt = static_cast<int64_t>(std::ceil(need_cnt_next / select_ratio));
+            int64_t need_res_cnt = OB_MIN(static_cast<int64_t>(std::ceil(need_cnt_next / select_ratio)),
+                                   query_cond_.query_limit_ * FIXED_MAGNIFICATION_RATIO_EACH_ITERATIVE);
             if (can_be_last_search(old_ef, need_cnt_next, select_ratio)) {
               new_limit = old_ef;
               query_cond_.is_last_search_ = true;
@@ -3251,7 +3250,6 @@ int ObDASHNSWScanIter::set_vector_query_condition(ObVectorQueryConditions &query
   } else {
     query_cond.query_order_ = true;
     query_cond.query_scn_ = snapshot_scan_param_.snapshot_.core_.version_;
-    query_cond.only_complete_data_ = only_complete_data_; // ture when search brute force
     query_cond.scan_param_ = &snapshot_scan_param_;
     query_cond.rel_count_ = vec_aux_ctdef_->relevance_col_cnt_;
     query_cond.rel_map_ptr_ = &rel_map_;
@@ -3290,7 +3288,7 @@ int ObDASHNSWScanIter::set_vector_query_condition(ObVectorQueryConditions &query
     } else {
       query_cond.query_vector_ = hybrid_search_vec_;
     }
-    LOG_TRACE("vector index show basic hnsw query cond", K(query_cond.only_complete_data_), K(query_cond.ef_search_), K(query_cond.query_limit_),
+    LOG_TRACE("vector index show basic hnsw query cond", K(query_cond.ef_search_), K(query_cond.query_limit_),
                                             K(query_cond.extra_column_count_), K(query_cond.query_vector_));
   }
   return ret;
