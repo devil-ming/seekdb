@@ -266,6 +266,10 @@ ob_set_subtarget(ob_share common
   ob_srs_importer.cpp
 )
 
+# ob_local_device.cpp defines AIO emulation types/functions for Android/macOS that
+# conflict with stub definitions in ob_file.h when merged into the same translation unit.
+set_source_files_properties(ob_local_device.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+
 ob_set_subtarget(ob_share common_mixed
   client_feedback/ob_client_feedback_basic.cpp
   client_feedback/ob_client_feedback_manager.cpp
@@ -658,6 +662,15 @@ ob_set_subtarget(ob_share vector_index
   vector_index/ob_vector_embedding_handler.cpp
   vector_index/ob_json_helper.cpp
   vector_index/ob_hybrid_vector_refresh_task.cpp
+)
+
+ob_set_subtarget(ob_share change_stream
+  change_stream/ob_change_stream_fetcher.cpp
+  change_stream/ob_change_stream_dispatcher.cpp
+  change_stream/ob_change_stream_worker.cpp
+  change_stream/ob_change_stream_plugin.cpp
+  change_stream/ob_change_stream_mgr.cpp
+  change_stream/ob_cs_plugin_async_index.cpp
 )
 
 ob_set_subtarget(ob_share vector_type
