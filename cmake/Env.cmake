@@ -190,9 +190,15 @@ if(OB_ANDROID)
   # and Env.cmake runs before project() which would set ANDROID.
   set(OB_CLANG_BIN "clang")
   set(OB_CLANGXX_BIN "clang++")
-  # NDK toolchain bin dir (derive from ANDROID_NDK_HOME or CMAKE_TOOLCHAIN_FILE)
+  # NDK toolchain bin dir (derive from ANDROID_NDK_HOME or CMAKE_TOOLCHAIN_FILE).
+  # GLOB prebuilt/*/bin so Linux hosts (e.g. CI) resolve linux-x86_64, macOS resolves darwin-x86_64.
   if(DEFINED ENV{ANDROID_NDK_HOME})
-    set(_NDK_TOOLCHAIN_BIN "$ENV{ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/darwin-x86_64/bin")
+    file(GLOB _NDK_TOOLCHAIN_BIN "$ENV{ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/*/bin")
+    list(LENGTH _NDK_TOOLCHAIN_BIN _ndk_bin_n)
+    if(_ndk_bin_n LESS 1)
+      message(FATAL_ERROR "ANDROID_NDK_HOME: no toolchains/llvm/prebuilt/*/bin under $ENV{ANDROID_NDK_HOME}")
+    endif()
+    list(GET _NDK_TOOLCHAIN_BIN 0 _NDK_TOOLCHAIN_BIN)
   else()
     # Derive from toolchain file path: .../build/cmake/android.toolchain.cmake -> .../toolchains/llvm/prebuilt/*/bin
     get_filename_component(_NDK_ROOT "${CMAKE_TOOLCHAIN_FILE}" DIRECTORY)

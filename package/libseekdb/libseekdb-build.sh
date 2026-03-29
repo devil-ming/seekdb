@@ -1,21 +1,36 @@
 #!/usr/bin/env bash
-# Build libseekdb, on macOS bundle deps to libs/, then pack lib + libs/ + seekdb.h into libseekdb-<os>-<arch>.zip
+# Build libseekdb, on macOS bundle deps to libs/, then pack lib + libs/ + seekdb.h into a .zip
 # Zip is written to this script's directory (package/libseekdb/).
 #
 # Usage:
 #   cd package/libseekdb && ./libseekdb-build.sh
 #   BUILD_TYPE=debug ./libseekdb-build.sh
-#   ./libseekdb-build.sh /path/to/dir-with-libseekdb   # skip build and bundle, pack from existing dir
+#   ./libseekdb-build.sh /path/to/dir-with-libseekdb   # pack from existing dir (no build)
+#
+# Android (NDK, arm64-v8a only): zip is libseekdb-android-arm64-v8a.zip — not host uname (e.g. darwin-*).
+#   ./libseekdb-build.sh --android                    # use build_android_<BUILD_TYPE>, build if needed
+#   ./libseekdb-build.sh /path/to/build_android_*/src/include   # pack only
 
 set -e
 
+# --- Parse flags (no LIBSEEKDB_* env vars) ---
+android_build=false
+remaining=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --android) android_build=true; shift ;;
+    *) remaining+=("$1"); shift ;;
+  esac
+done
+set -- "${remaining[@]}"
+
 # --- Paths and config ---
-CURDIR="$PWD"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOP_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 BUILD_TYPE="${BUILD_TYPE:-release}"
 BUILD_DIR="$TOP_DIR/build_${BUILD_TYPE}"
 WORK_DIR=""
+ANDROID_PACK=false
 UNAME_S="$(uname -s)"
 UNAME_M="$(uname -m)"
 
@@ -50,17 +65,40 @@ strip_rpaths() {
 # --- 1) Resolve WORK_DIR ---
 if [[ -n "${1:-}" ]]; then
   WORK_DIR="$(cd "$1" && pwd)"
-  echo "[BUILD] Using existing directory: $WORK_DIR (skip build and bundle)"
+  echo "[BUILD] Using directory: $WORK_DIR (pack from existing tree; no build)"
+  if [[ "$android_build" == true ]]; then
+    ANDROID_PACK=true
+    if [[ "$WORK_DIR" == *"/src/include" ]]; then
+      BUILD_DIR="$(cd "$WORK_DIR/../.." && pwd)"
+    fi
+  fi
+elif [[ "$android_build" == true ]]; then
+  ANDROID_PACK=true
+  BUILD_DIR="$TOP_DIR/build_android_${BUILD_TYPE}"
+  WORK_DIR="$BUILD_DIR/src/include"
+  echo "[BUILD] Android: BUILD_DIR=$BUILD_DIR"
 else
   WORK_DIR="$BUILD_DIR/src/include"
+fi
 
+if [[ -z "${1:-}" ]]; then
   # --- 2) Build libseekdb if not present (main lib is always next to libs/, not inside) ---
   if [[ ! -f "$WORK_DIR/libseekdb.dylib" && ! -f "$WORK_DIR/libseekdb.so" ]]; then
     echo "[BUILD] Building libseekdb (BUILD_TYPE=$BUILD_TYPE)..."
-    if [[ ! -d "$BUILD_DIR" ]]; then
-      (cd "$TOP_DIR" && ./build.sh "$BUILD_TYPE" --init --make) || exit 1
+    if [[ "$ANDROID_PACK" == true ]]; then
+      if [[ ! -d "$BUILD_DIR" ]]; then
+        (cd "$TOP_DIR" && ./build.sh "$BUILD_TYPE" --android --init --make) || exit 1
+      else
+        (cd "$TOP_DIR" && ./build.sh "$BUILD_TYPE" --android --make) || exit 1
+      fi
+      _j=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+      (cd "$BUILD_DIR" && make libseekdb -j"${_j}") || exit 1
     else
-      (cd "$TOP_DIR" && ./build.sh "$BUILD_TYPE" --make) || exit 1
+      if [[ ! -d "$BUILD_DIR" ]]; then
+        (cd "$TOP_DIR" && ./build.sh "$BUILD_TYPE" --init --make) || exit 1
+      else
+        (cd "$TOP_DIR" && ./build.sh "$BUILD_TYPE" --make) || exit 1
+      fi
     fi
   fi
 
@@ -155,23 +193,40 @@ HEADER="$TOP_DIR/src/include/seekdb.h"
 [[ -f "$HEADER" ]] || die "seekdb.h not found: $HEADER"
 
 # --- 5) OS / Arch for zip name ---
-case "$UNAME_S" in
-  Darwin) OS="darwin" ;;
-  Linux)  OS="linux"  ;;
-  *)      die "unsupported OS: $UNAME_S" ;;
-esac
-if [[ -n "${ARCH:-}" ]]; then
-  echo "[BUILD] Using ARCH from environment: $ARCH"
-else
-  case "$UNAME_M" in
-    arm64|aarch64) ARCH="arm64"   ;;
-    x86_64|amd64)  ARCH="x86_64" ;;
-    *)             die "unsupported arch: $UNAME_M" ;;
-  esac
+# Android (arm64-v8a only): fixed zip name; not host uname. Detect ELF .so on Mac without --android.
+ZIP_USE_ANDROID_PREFIX="$ANDROID_PACK"
+if [[ "$ZIP_USE_ANDROID_PREFIX" != true && "$UNAME_S" == "Darwin" && -f "$WORK_DIR/libseekdb.so" && ! -f "$WORK_DIR/libseekdb.dylib" ]]; then
+  if command -v file >/dev/null 2>&1; then
+    _so_info="$(file -b "$WORK_DIR/libseekdb.so" 2>/dev/null || true)"
+    if echo "$_so_info" | grep -q 'ELF.*shared object'; then
+      ZIP_USE_ANDROID_PREFIX=true
+      echo "[BUILD] libseekdb.so is ELF (NDK): zip libseekdb-android-arm64-v8a.zip (not darwin-*)"
+    fi
+  fi
 fi
-ARCH_SUFFIX="${ARCH}"
-[[ "$ARCH" == "x86_64" ]] && ARCH_SUFFIX="x64"
-ZIP_NAME="libseekdb-${OS}-${ARCH_SUFFIX}.zip"
+
+if [[ "$ZIP_USE_ANDROID_PREFIX" == true ]]; then
+  ZIP_NAME="libseekdb-android-arm64-v8a.zip"
+  echo "[BUILD] Android artifact zip: $ZIP_NAME"
+else
+  case "$UNAME_S" in
+    Darwin) OS="darwin" ;;
+    Linux)  OS="linux"  ;;
+    *)      die "unsupported OS: $UNAME_S" ;;
+  esac
+  if [[ -n "${ARCH:-}" ]]; then
+    echo "[BUILD] Using ARCH from environment: $ARCH"
+  else
+    case "$UNAME_M" in
+      arm64|aarch64) ARCH="arm64"   ;;
+      x86_64|amd64)  ARCH="x86_64" ;;
+      *)             die "unsupported arch: $UNAME_M" ;;
+    esac
+  fi
+  ARCH_SUFFIX="${ARCH}"
+  [[ "$ARCH" == "x86_64" ]] && ARCH_SUFFIX="x64"
+  ZIP_NAME="libseekdb-${OS}-${ARCH_SUFFIX}.zip"
+fi
 MAIN_LIB_NAME="$(basename "$MAIN_LIB")"
 
 # --- 6) Assemble and zip ---

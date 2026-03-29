@@ -1,15 +1,16 @@
-# Build, pack and upload libseekdb for multiple platforms (linux x64/arm64, macos arm64) to S3
+# Build, pack and upload libseekdb for multiple platforms (linux x64/arm64, macos arm64, android arm64-v8a) to S3
 #
 # Reference build environments (use these systems/env as the standard):
 #   linux-x64:   runner ubuntu-22.04, container quay.io/pypa/manylinux2014_x86_64 (glibc 2.17, CentOS 7+), zip libseekdb-linux-x64.zip
 #   linux-arm64: runner ubuntu-22.04-arm, container quay.io/pypa/manylinux2014_aarch64 (glibc 2.17), zip libseekdb-linux-arm64.zip
 #   darwin-arm64: runner macos-14, native, zip libseekdb-darwin-arm64.zip (min macOS 11.0)
+#   android-arm64-v8a: runner ubuntu-22.04, NDK + ./build.sh --android, zip libseekdb-android-arm64-v8a.zip
 #
 # macOS builds use runner macos-14 and set CMAKE_OSX_DEPLOYMENT_TARGET=11.0 so the dylib runs on macOS 11+ (Big Sur and later).
 # On macOS, dylibs are signed in libseekdb-build.sh: ad-hoc when no cert; when repo is oceanbase/seekdb and secrets are set,
 # use Developer ID (secrets: OSX_CODESIGN_BUILD_CERTIFICATE_BASE64, OSX_CODESIGN_P12_PASSWORD, OSX_CODESIGN_KEYCHAIN_PASSWORD, OSX_CODESIGN_IDENTITY).
 # Optional: add notarization step and APPLE_ID/PASSWORD/TEAM_ID secrets to notarize the zip.
-# Artifacts: three platform zips (linux-x64, linux-arm64, darwin-arm64); combined artifact libseekdb-all-platforms; optional S3 upload when DESTINATION_TARGET_PATH or AWS_S3_BUCKET and credentials are set.
+# Artifacts: platform zips including libseekdb-android-arm64-v8a.zip; combined artifact libseekdb-all-platforms; optional S3 upload when DESTINATION_TARGET_PATH or AWS_S3_BUCKET and credentials are set.
 name: Build libseekdb
 run-name: Build libseekdb for ${{ github.event_name == 'workflow_dispatch' && inputs.ref != '' && inputs.ref || (github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha) }}
 
@@ -134,7 +135,7 @@ jobs:
       - name: Setup Node.js (Linux)
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Setup Rust (Linux)
         uses: dtolnay/rust-toolchain@stable
@@ -144,13 +145,13 @@ jobs:
       - name: Setup Go (Linux)
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: "1.21"
 
       - name: Setup Java (Linux)
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Test Node.js FFI binding (Linux)
         run: |
@@ -271,7 +272,7 @@ jobs:
       - name: Setup Node.js (macOS)
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Setup Rust (macOS)
         uses: dtolnay/rust-toolchain@stable
@@ -281,13 +282,13 @@ jobs:
       - name: Setup Go (macOS)
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: "1.21"
 
       - name: Setup Java (macOS)
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Test Node.js FFI binding (macOS)
         run: |
@@ -365,6 +366,82 @@ jobs:
           path: .ccache
           key: ${{ runner.os }}-ccache-libseekdb-${{ matrix.platform }}
 
+  # ---------- Android NDK cross-compile (ubuntu; arm64-v8a) ----------
+  build-android:
+    name: Build libseekdb (android-arm64-v8a)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref != '' && inputs.ref || (github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha) }}
+
+      - name: Install Ubuntu packages
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get update
+          sudo apt-get install -y git wget rpm rpm2cpio cpio make build-essential binutils m4 libtool-bin libncurses5 python3 zlib1g-dev ccache
+
+      - name: Install Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: 27.3.13750724
+
+      - name: Cache deps (Android)
+        uses: actions/cache@v4
+        with:
+          path: deps/3rd
+          key: ${{ runner.os }}-libseekdb-deps-android-arm64-v8a-${{ hashFiles('deps/init/oceanbase.android.arm64.deps') }}
+          restore-keys: |
+            ${{ runner.os }}-libseekdb-deps-android-arm64-v8a-
+
+      - name: Cache ccache (Android)
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ${{ runner.os }}-ccache-libseekdb-android-arm64-v8a
+          restore-keys: |
+            ${{ runner.os }}-ccache-libseekdb-android-arm64-v8a-
+
+      - name: Build libseekdb (Android)
+        env:
+          BUILD_TYPE: release
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+          CCACHE_COMPILERCHECK: content
+          CCACHE_NOHASHDIR: 1
+        run: |
+          set -e
+          mkdir -p deps/3rd/usr/local/oceanbase/devtools/bin
+          ln -sf "$(command -v ccache)" deps/3rd/usr/local/oceanbase/devtools/bin/ccache
+          export PATH="$GITHUB_WORKSPACE/deps/3rd/usr/local/oceanbase/devtools/bin:$PATH"
+          # ANDROID_NDK_HOME is set by the NDK install step; build.sh fixes ANDROID_ABI=arm64-v8a.
+          bash build.sh release --android -DOB_USE_CCACHE=ON --init --make libseekdb
+          ccache -s
+
+      - name: Pack libseekdb (Android)
+        run: cd package/libseekdb && bash libseekdb-build.sh --android
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libseekdb-android-arm64-v8a
+          path: package/libseekdb/libseekdb-android-arm64-v8a.zip
+
+      - name: Save Cache deps (Android)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: deps/3rd
+          key: ${{ runner.os }}-libseekdb-deps-android-arm64-v8a-${{ hashFiles('deps/init/oceanbase.android.arm64.deps') }}
+
+      - name: Save Cache ccache (Android)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .ccache
+          key: ${{ runner.os }}-ccache-libseekdb-android-arm64-v8a
+
   # ---------- Collect libseekdb artifacts and upload to S3 (runs only after all build jobs pass, including binding tests) ----------
   release-artifacts:
     name: Collect artifacts and upload to S3
@@ -372,6 +449,7 @@ jobs:
     needs:
       - build
       - build-macos
+      - build-android
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4

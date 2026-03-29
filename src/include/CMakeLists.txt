@@ -42,10 +42,11 @@ target_include_directories(libseekdb
 )
 
 # Link oceanbase_static into the shared library
-# Use --whole-archive (Linux) / -all_load (macOS) to include all symbols from static library
-# On Linux: -static-libstdc++ and -static-libgcc to avoid runtime dependency on system C++ libraries
+# Use --whole-archive (Linux/Android) / -force_load (macOS) to include all symbols from static library
+# On Linux desktop: -static-libstdc++ and -static-libgcc to avoid runtime dependency on system C++ libs
+# Android NDK: use libc++ from sysroot; no static-libstdc++/libgcc (same idea as oceanbase target)
 # (macOS/clang does not support -static-libgcc/-static-libstdc++)
-# Use version script (Linux) / exported_symbols_list (macOS) to hide internal symbols
+# Use version script (Linux/Android) / exported_symbols_list (macOS) to hide internal symbols
 if(APPLE)
   # macOS: -exported_symbols_list does NOT support wildcards; generate list from seekdb.h
   file(READ "${CMAKE_CURRENT_SOURCE_DIR}/seekdb.h" SEEKDB_HEADER_CONTENT)
@@ -71,6 +72,16 @@ if(APPLE)
     PRIVATE
       oceanbase_static
       -Wl,-exported_symbols_list,${SEEKDB_EXPORT_FILE}
+  )
+elseif(ANDROID)
+  # NDK: libc++ from sysroot; do not use -static-libstdc++ / -static-libgcc (Linux desktop only).
+  target_link_libraries(libseekdb
+    PRIVATE
+      -Wl,--whole-archive
+      oceanbase_static
+      -Wl,--no-whole-archive
+      -Wl,--allow-multiple-definition
+      -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/seekdb.version
   )
 else()
   target_link_libraries(libseekdb
