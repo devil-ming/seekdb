@@ -366,10 +366,12 @@ jobs:
           path: .ccache
           key: ${{ runner.os }}-ccache-libseekdb-${{ matrix.platform }}
 
-  # ---------- Android NDK cross-compile (ubuntu; arm64-v8a) ----------
+  # ---------- Android NDK cross-compile (macOS arm64 host; target arm64-v8a) ----------
+  # ubuntu-* runners are x86_64 by default. macOS-14 uses Apple silicon + NDK darwin-arm64 prebuilts (see docs).
+  # Alternative: runs-on: ubuntu-24.04-arm for Linux ARM64.
   build-android:
     name: Build libseekdb (android-arm64-v8a)
-    runs-on: ubuntu-22.04
+    runs-on: macos-14
     timeout-minutes: 180
     steps:
       - name: Checkout
@@ -377,11 +379,9 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref != '' && inputs.ref || (github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha) }}
 
-      - name: Install Ubuntu packages
+      - name: Install macOS packages
         run: |
-          export DEBIAN_FRONTEND=noninteractive
-          sudo apt-get update
-          sudo apt-get install -y git wget rpm rpm2cpio cpio cmake make build-essential binutils m4 libtool-bin libncurses5 python3 zlib1g-dev ccache
+          brew install cmake ccache wget || true
 
       - name: Install Android NDK
         uses: nttld/setup-ndk@v1

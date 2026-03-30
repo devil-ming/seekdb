@@ -753,7 +753,9 @@ static int do_seekdb_open_inner(const char* db_dir, int port) {
     
     
     struct statfs fs_info;
+#ifndef TMPFS_MAGIC
     const long TMPFS_MAGIC = 0x01021994;
+#endif
     try {
         if (OB_FAIL(ret)) {
         } else if (OB_FAIL(FileDirectoryUtils::create_full_path(opts.base_dir_.ptr()))) {
