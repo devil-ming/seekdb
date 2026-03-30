@@ -103,7 +103,36 @@ set_target_properties(libseekdb PROPERTIES
 
 # Strip debug symbols in release builds to reduce library size
 if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT CMAKE_BUILD_TYPE STREQUAL "debug")
-  if(APPLE)
+  # Android on macOS host: CMAKE_STRIP still points at host strip (Mach-O only); use NDK llvm-strip for ELF.
+  # NDK path: CMAKE_ANDROID_NDK from android.toolchain.cmake, else same derivation as cmake/Env.cmake from CMAKE_TOOLCHAIN_FILE.
+  # Do not rely on ENV{ANDROID_NDK_HOME}: build.sh does not export it, so CMake often has no such env.
+  if(ANDROID)
+    set(_seekdb_ndk "")
+    if(CMAKE_ANDROID_NDK)
+      set(_seekdb_ndk "${CMAKE_ANDROID_NDK}")
+    elseif(CMAKE_TOOLCHAIN_FILE)
+      # CMAKE_TOOLCHAIN_FILE is .../ndk/<ver>/build/cmake/android.toolchain.cmake; we need the NDK root for toolchains/.
+      # Each DIRECTORY step goes up one level: cmake -> build -> NDK root (three times; same as cmake/Env.cmake).
+      get_filename_component(_seekdb_ndk "${CMAKE_TOOLCHAIN_FILE}" DIRECTORY)
+      get_filename_component(_seekdb_ndk "${_seekdb_ndk}" DIRECTORY)
+      get_filename_component(_seekdb_ndk "${_seekdb_ndk}" DIRECTORY)
+    endif()
+    set(_seekdb_llvm_strip "")
+    if(_seekdb_ndk)
+      file(GLOB _seekdb_llvm_strip "${_seekdb_ndk}/toolchains/llvm/prebuilt/*/bin/llvm-strip")
+      if(_seekdb_llvm_strip)
+        list(GET _seekdb_llvm_strip 0 _seekdb_llvm_strip)
+      endif()
+    endif()
+    if(_seekdb_llvm_strip)
+      add_custom_command(TARGET libseekdb POST_BUILD
+        COMMAND "${_seekdb_llvm_strip}" $<TARGET_FILE:libseekdb>
+        COMMENT "Stripping debug symbols from libseekdb (Android ELF via NDK llvm-strip)"
+      )
+    else()
+      message(WARNING "Android libseekdb: llvm-strip not found under NDK; skipping strip")
+    endif()
+  elseif(APPLE)
     # macOS: -S strip __DWARF (debug), -x strip local symbol table; full strip fails due to indirect symbol table
     add_custom_command(TARGET libseekdb POST_BUILD
       COMMAND ${CMAKE_STRIP} -Sx $<TARGET_FILE:libseekdb>
