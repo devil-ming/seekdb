@@ -243,9 +243,14 @@ endif()
 
 ob_define(OB_USE_CCACHE OFF)
 if (OB_USE_CCACHE)
+  # Prefer devtools (from deps); dep_create may wipe deps/3rd before a symlink is recreated,
+  # and Android deps do not ship obdevtools-ccache — fall back to ccache on PATH.
   find_program(OB_CCACHE ccache PATHS "${DEVTOOLS_DIR}/bin" NO_DEFAULT_PATH)
   if (NOT OB_CCACHE)
-    message(FATAL_ERROR "cannot find ccache.")
+    find_program(OB_CCACHE ccache)
+  endif()
+  if (NOT OB_CCACHE)
+    message(FATAL_ERROR "cannot find ccache. Install ccache (e.g. apt install ccache) or place it under ${DEVTOOLS_DIR}/bin.")
   else()
     set(CMAKE_C_COMPILER_LAUNCHER ${OB_CCACHE})
     set(CMAKE_CXX_COMPILER_LAUNCHER ${OB_CCACHE})
