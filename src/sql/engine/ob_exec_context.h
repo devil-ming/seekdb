@@ -324,7 +324,7 @@ public:
   /**
    * @brief get admission addr set
    */
-  int get_admission_addr_map(hash::ObHashMap<ObAddr, int64_t> *&addr_map);
+  hash::ObHashMap<ObAddr, int64_t> &get_admission_addr_map();
 
   /**
    * @brief get allocator.
@@ -609,7 +609,6 @@ public:
 private:
   int build_temp_expr_ctx(const ObTempExpr &temp_expr, ObTempExprCtx *&temp_expr_ctx);
   int check_extra_status();
-  void release_admission_addr_map();
   void set_pl_stack_ctx(pl::ObPLContext *pl_stack_ctx) { pl_stack_ctx_ = pl_stack_ctx; }
   //set the parent execute context in nested sql
   void set_parent_ctx(ObExecContext *parent_ctx) { parent_ctx_ = parent_ctx; }
@@ -742,7 +741,7 @@ protected:
   int64_t px_batch_id_;
 
   uint64_t admission_version_;
-  hash::ObHashMap<ObAddr, int64_t> *admission_addr_map_;
+  hash::ObHashMap<ObAddr, int64_t> admission_addr_map_;
   // used for temp expr ctx manager
   bool use_temp_expr_ctx_cache_;
   hash::ObHashMap<int64_t, int64_t> temp_expr_ctx_map_;
@@ -892,18 +891,9 @@ inline uint64_t ObExecContext::get_admission_version() const
   return admission_version_;
 }
 
-inline int ObExecContext::get_admission_addr_map(hash::ObHashMap<ObAddr, int64_t> *&addr_map)
+inline hash::ObHashMap<ObAddr, int64_t> &ObExecContext::get_admission_addr_map()
 {
-  int ret = OB_SUCCESS;
-  typedef hash::ObHashMap<ObAddr, int64_t> AdmissionAddrMap;
-  if (OB_ISNULL(admission_addr_map_)) {
-    void *buf = ob_malloc(sizeof(AdmissionAddrMap), ObMemAttr(OB_SYS_TENANT_ID, "PxAdmAddrMap"));
-    if (OB_NOT_NULL(buf)) {
-      admission_addr_map_ = new (buf) AdmissionAddrMap();
-    }
-  }
-  addr_map = admission_addr_map_;
-  return ret;
+  return admission_addr_map_;
 }
 
 struct ObTempExprCtxReplaceGuard
