@@ -188,8 +188,10 @@ int ObDirectReceiveOp::setup_next_scanner()
         plan_ctx->set_last_insert_id_session(scanner->get_last_insert_id_session());
         plan_ctx->set_last_insert_id_changed(scanner->get_last_insert_id_changed());
         int tmp_ret = OB_SUCCESS;
-        ObExecStatCollector &collector = ctx_.get_exec_stat_collector();
-        if (OB_SUCCESS != (tmp_ret = collector.add_raw_stat(scanner->get_extend_info()))) {
+        ObExecStatCollector *collector = NULL;
+        if (OB_SUCCESS != (tmp_ret = ctx_.get_exec_stat_collector(collector))) {
+          LOG_WARN("fail to get exec stat collector", K(tmp_ret));
+        } else if (OB_SUCCESS != (tmp_ret = collector->add_raw_stat(scanner->get_extend_info()))) {
           LOG_WARN("fail to collected raw extend info in scanner", K(tmp_ret));
         }
         if (OB_FAIL(scanner->get_err_code())) {
@@ -221,7 +223,7 @@ int ObDirectReceiveOp::setup_next_scanner()
              * ObRemoteTaskExecutor::execute() has called merge_result() before here, that is a
              * better place to call merge_result(), especially when any operation failed between
              * there and here.
-             * see 
+             * see
              */
           } else if (OB_FAIL(plan_ctx->merge_implicit_cursors(scanner->get_implicit_cursors()))) {
             LOG_WARN("merge implicit cursors failed", K(ret), K(scanner->get_implicit_cursors()));
@@ -265,8 +267,10 @@ int ObDirectReceiveOp::setup_next_scanner()
         plan_ctx->set_last_insert_id_session(scanner_->get_last_insert_id_session());
         plan_ctx->set_last_insert_id_changed(scanner_->get_last_insert_id_changed());
         int tmp_ret = OB_SUCCESS;
-        ObExecStatCollector &collector = ctx_.get_exec_stat_collector();
-        if (OB_SUCCESS != (tmp_ret = collector.add_raw_stat(scanner_->get_extend_info()))) {
+        ObExecStatCollector *collector = NULL;
+        if (OB_SUCCESS != (tmp_ret = ctx_.get_exec_stat_collector(collector))) {
+          LOG_WARN("fail to get exec stat collector", K(tmp_ret));
+        } else if (OB_SUCCESS != (tmp_ret = collector->add_raw_stat(scanner_->get_extend_info()))) {
           LOG_WARN("fail to collected raw extend info in scanner", K(tmp_ret));
         }
         if (OB_SUCCESS != (tmp_ret = plan_ctx->get_table_row_count_list()
