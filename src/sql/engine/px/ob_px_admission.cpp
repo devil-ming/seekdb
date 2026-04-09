@@ -218,14 +218,13 @@ void ObPxAdmission::exit_query_admission(ObSQLSessionInfo &session,
     if (OB_FAIL(exec_ctx.get_admission_addr_map(addr_map))) {
       LOG_WARN("failed to get addr_map");
     } else if (OB_ISNULL(addr_map)) {
-      ret = OB_ERR_UNEXPECTED;
       LOG_WARN("addr_map is null");
     } else if (OB_FAIL(OB_PX_TARGET_MGR.release_target(tenant_id,
                                                 *addr_map,
                                                 exec_ctx.get_admission_version()))) {
       LOG_WARN("release target failed", K(ret), K(tenant_id), K(exec_ctx.get_admission_version()));
     }
-    (void)addr_map->destroy();
+    (void)addr_map.destroy();
     LOG_DEBUG("release resource, notify wait threads");
   }
 }
