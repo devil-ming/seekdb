@@ -29,12 +29,6 @@ namespace common
 static constexpr int64_t ALL_STACK_LIMIT = 10L << 20;
 static constexpr int64_t STACK_PER_EXTEND = (2L << 20) - ACHUNK_PRESERVE_SIZE * 2;
 static constexpr int64_t STACK_RESERVED_SIZE = 64L << 10;
-
-// If we use a small thread stack span (e.g. 256 KiB), ~64 KiB is treated as already consumed by TLS,
-// guard pages, and similar fixed overhead at the stack edge. (256 - 64) KiB is therefore
-// the rough usable span on that layout, and matching it here makes SMART_CALL_LARGE switch
-// to an extended stack before the deep planner/parser paths exhaust that headroom.
-static constexpr int64_t STACK_RESERVED_SIZE_LARGE = (256L - 64L) << 10;
 RLOCAL_EXTERN(int64_t, all_stack_size);
 
 int jump_call(void * arg_, int(*func_) (void*), void* stack_addr);
@@ -82,7 +76,7 @@ inline int alloc_stack(const size_t stack_size, void *&stack_addr)
     ori_stack_size : all_stack_size)) {
   } else if (all_stack_size + stack_size > ALL_STACK_LIMIT) {
     ret = OB_SIZE_OVERFLOW;
-  } else if (OB_ISNULL(stack_addr = lib::g_stack_allocer.smart_call_alloc(tenant_id, stack_size))) {
+  } else if (OB_ISNULL(stack_addr = lib::g_stack_allocer.smart_call_alloc( tenant_id, stack_size))) {
     ret = OB_ALLOCATE_MEMORY_FAILED;
   } else {
     all_stack_size += stack_size;
@@ -118,13 +112,12 @@ inline void dealloc_stack(void *stack_addr, size_t stack_size)
     ret = call_with_new_stack(arg_, func_, stack_addr, stack_size);       \
     ret;                                                                  \
   })
-
-#define __SMART_CALL_IMPL(reserved_size, func)                              \
+#define SMART_CALL(func)                                                    \
   ({                                                                        \
     int ret = OB_SUCCESS;                                                   \
     bool is_overflow = false;                                               \
     RECURSION_CHECKER_GUARD;                                                \
-    if (OB_FAIL(check_stack_overflow(is_overflow, reserved_size))) {        \
+    if (OB_FAIL(check_stack_overflow(is_overflow, STACK_RESERVED_SIZE))) {  \
     } else if (!is_overflow) {                                              \
       ret = func;                                                           \
     } else {                                                                \
@@ -137,17 +130,6 @@ inline void dealloc_stack(void *stack_addr, size_t stack_size)
     }                                                                       \
     ret;                                                                    \
   })
-
-#define SMART_CALL(func) __SMART_CALL_IMPL(STACK_RESERVED_SIZE, func)
-// Like SMART_CALL, but uses STACK_RESERVED_SIZE_LARGE when probing stack headroom, so we
-// switch to a heap-allocated stack extension sooner. Worker threads are often created with
-// a relatively small stack (e.g. 256 KiB); on deep recursive paths the default margin
-// would be hit repeatedly or risk real overflow. Use SMART_CALL_LARGE for subtrees that
-// routinely need extra stack, such as generating execution plans for complex SQL or
-// parsing complex PL statements, so the extended stack is taken before the remaining native
-// stack is too tight for those call chains.
-#define SMART_CALL_LARGE(func) __SMART_CALL_IMPL(STACK_RESERVED_SIZE_LARGE, func)
-
 #else
 #define CALL_WITH_NEW_STACK(func, stack_addr, stack_size)   \
   ({                                                        \
@@ -155,7 +137,6 @@ inline void dealloc_stack(void *stack_addr, size_t stack_size)
     ret = func;                                             \
     ret;                                                    \
   })
-
 #define SMART_CALL(func)                                                    \
   ({                                                                        \
     int ret = OB_SUCCESS;                                                   \
@@ -168,8 +149,6 @@ inline void dealloc_stack(void *stack_addr, size_t stack_size)
    }                                                                        \
     ret;                                                                    \
   })
-
-#define SMART_CALL_LARGE SMART_CALL
 #endif
 } // end of namespace common
 } // end of namespace oceanbase

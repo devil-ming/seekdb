@@ -145,7 +145,7 @@ ObExecContext::ObExecContext(ObIAllocator &allocator)
     expr_op_ctx_store_(NULL),
     task_executor_ctx_(*this),
     my_session_(NULL),
-    exec_stat_collector_(NULL),
+    sql_proxy_(NULL),
     stmt_factory_(NULL),
     expr_factory_(NULL),
     outline_params_wrapper_(NULL),
@@ -177,12 +177,13 @@ ObExecContext::ObExecContext(ObIAllocator &allocator)
     op_kit_store_(),
     convert_allocator_(nullptr),
     mem_context_(nullptr),
+    pwj_map_(nullptr),
     group_pwj_map_(nullptr),
     check_status_times_(0),
     vt_ift_(nullptr),
     px_batch_id_(0),
     admission_version_(UINT64_MAX),
-    admission_addr_map_(NULL),
+    admission_addr_map_(),
     use_temp_expr_ctx_cache_(false),
     temp_expr_ctx_map_(),
     dml_event_(ObDmlEventType::DE_INVALID),
@@ -211,6 +212,7 @@ ObExecContext::ObExecContext(ObIAllocator &allocator)
     deterministic_udf_cache_allocator_("UDFCACHE", OB_MALLOC_NORMAL_BLOCK_SIZE, MTL_ID()),
     current_granule_type_(OB_GRANULE_UNINITIALIZED)
 {
+  exec_stat_collector_.init(&allocator_);
 }
 
 ObExecContext::~ObExecContext()
@@ -218,10 +220,6 @@ ObExecContext::~ObExecContext()
   row_id_list_array_.reset();
   destroy_eval_allocator();
   reset_op_ctx();
-  if (OB_NOT_NULL(exec_stat_collector_)) {
-    exec_stat_collector_->~ObExecStatCollector();
-    exec_stat_collector_ = NULL;
-  }
   
   if (NULL != phy_plan_ctx_) {
     if (!THIS_WORKER.has_req_flag()) {
@@ -268,7 +266,7 @@ ObExecContext::~ObExecContext()
     DESTROY_CONTEXT(mem_context_);
     mem_context_ = NULL;
   }
-  release_admission_addr_map();
+  admission_addr_map_.destroy();
   if (!temp_expr_ctx_map_.created()) {
   // do nothing
   } else {
@@ -289,16 +287,6 @@ ObExecContext::~ObExecContext()
   auto_dop_map_.destroy();
 }
 
-void ObExecContext::release_admission_addr_map()
-{
-  if (OB_NOT_NULL(admission_addr_map_)) {
-    admission_addr_map_->destroy();
-    admission_addr_map_->~ObHashMap();
-    ob_free(admission_addr_map_);
-    admission_addr_map_ = NULL;
-  }
-}
-
 void ObExecContext::clean_resolve_ctx()
 {
   if (OB_NOT_NULL(expr_factory_)) {
@@ -316,23 +304,6 @@ void ObExecContext::clean_resolve_ctx()
 uint64_t ObExecContext::get_ser_version() const
 {
   return SER_VERSION_1;
-}
-
-int ObExecContext::get_exec_stat_collector(ObExecStatCollector *&collector)
-{
-  int ret = OB_SUCCESS;
-  collector = exec_stat_collector_;
-  if (OB_ISNULL(collector)) {
-    void *buf = allocator_.alloc(sizeof(ObExecStatCollector));
-    if (OB_ISNULL(buf)) {
-      ret = OB_ALLOCATE_MEMORY_FAILED;
-      LOG_WARN("allocate execution stat collector failed", K(ret));
-    } else {
-      collector = new (buf) ObExecStatCollector();
-      exec_stat_collector_ = collector;
-    }
-  }
-  return ret;
 }
 
 void ObExecContext::reset_op_ctx()
