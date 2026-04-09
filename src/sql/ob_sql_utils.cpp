@@ -27,7 +27,6 @@
 #include "share/schema/ob_schema_printer.h"
 #include "storage/ob_locality_manager.h"
 #include "sql/engine/expr/ob_expr_lob_utils.h"
-#include <openssl/md5.h>
 #include "share/resource_manager/ob_resource_manager.h"
 #include "observer/omt/ob_tenant_srs.h"
 #include "sql/resolver/ddl/ob_create_view_resolver.h"
@@ -376,7 +375,7 @@ void ObSQLUtils::clear_expr_eval_flags(const ObExpr &expr, ObEvalCtx &ctx)
   if (expr.eval_func_ != NULL || T_OP_ROW == expr.type_) {
     // The eval_func_ of the T_OP_ROW expression is null, causing the issue where the evaluation
     // flag of the child expressions is not cleared. For more detail, see issue
-    // 
+    //
     expr.get_eval_info(ctx).clear_evaluated_flag();
     for (int64_t i = 0; i < expr.arg_cnt_; i++) {
       clear_expr_eval_flags(*expr.args_[i], ctx);
@@ -610,7 +609,7 @@ int ObSQLUtils::se_calc_const_expr(ObSQLSessionInfo *session,
       if (session->get_ddl_info().is_ddl_check_default_value()) {
         effective_tenant_id = OB_SERVER_TENANT_ID;
       }
-      SMART_VARS_2((ObExecContext, exec_ctx, tmp_allocator),
+      HEAP_VARS_2((ObExecContext, exec_ctx, tmp_allocator),
                    (ObStaticEngineExprCG, expr_cg, tmp_allocator,
                     session, schema_guard,
                     phy_plan_ctx->get_original_param_cnt(),
@@ -682,8 +681,8 @@ int ObSQLUtils::se_calc_const_expr(ObSQLSessionInfo *session,
                 // should call ObUserDefinedType::destruct_obj later
                 // fix bug:
                 // create table udt_t1 (
-                //   id int, 
-                //   x1 sdo_geometry DEFAULT 
+                //   id int,
+                //   x1 sdo_geometry DEFAULT
                 //      sdo_geometry(2002, null, null,
                 //                   sdo_elem_info_array (1,2,1),
                 //                   sdo_ordinate_array (10,25, 20,30, 25,25, 30,30)));
@@ -1080,7 +1079,7 @@ int ObSQLUtils::extract_odps_part_spec(const ObString &all_part_spec, ObIArray<O
 }
 
 int ObSQLUtils::get_external_table_type(const uint64_t tenant_id,
-                                        const uint64_t table_id, 
+                                        const uint64_t table_id,
                                         ObExternalFileFormat::FormatType &type)
 {
   int ret = OB_SUCCESS;
@@ -1104,7 +1103,7 @@ int ObSQLUtils::get_external_table_type(const ObTableSchema *table_schema, ObExt
   } else {
     ObExternalFileFormat format;
     ObArenaAllocator allocator;
-    ObString table_format_or_properties = table_schema->get_external_file_format().empty() ? 
+    ObString table_format_or_properties = table_schema->get_external_file_format().empty() ?
                                   table_schema->get_external_properties(): table_schema->get_external_file_format();
     if (OB_FAIL(get_external_table_type(table_format_or_properties, type))) {
       LOG_WARN("failed to get external table type", K(ret), K(table_format_or_properties));
@@ -1113,7 +1112,7 @@ int ObSQLUtils::get_external_table_type(const ObTableSchema *table_schema, ObExt
   return ret;
 }
 
-int ObSQLUtils::get_external_table_type(const ObString &table_format_or_properties, 
+int ObSQLUtils::get_external_table_type(const ObString &table_format_or_properties,
                                         ObExternalFileFormat::FormatType &type) {
   int ret = OB_SUCCESS;
   ObExternalFileFormat format;
@@ -1129,7 +1128,7 @@ int ObSQLUtils::get_external_table_type(const ObString &table_format_or_properti
 
 
 int ObSQLUtils::is_odps_external_table(const uint64_t tenant_id,
-                                       const uint64_t table_id, 
+                                       const uint64_t table_id,
                                        bool &is_odps_external_table)
 {
   int ret = OB_SUCCESS;
@@ -1143,7 +1142,7 @@ int ObSQLUtils::is_odps_external_table(const uint64_t tenant_id,
   return ret;
 }
 
-int ObSQLUtils::is_odps_external_table(const ObTableSchema *table_schema, 
+int ObSQLUtils::is_odps_external_table(const ObTableSchema *table_schema,
                                        bool &is_odps_external_table)
 {
   int ret = OB_SUCCESS;
@@ -1160,7 +1159,7 @@ int ObSQLUtils::is_odps_external_table(const ObTableSchema *table_schema,
   return ret;
 }
 
-int ObSQLUtils::is_odps_external_table(const ObString &table_format_or_properties, 
+int ObSQLUtils::is_odps_external_table(const ObString &table_format_or_properties,
                                        bool &is_odps_external_table)
 {
   int ret = OB_SUCCESS;
@@ -1174,7 +1173,7 @@ int ObSQLUtils::is_odps_external_table(const ObString &table_format_or_propertie
   return ret;
 }
 
-int ObSQLUtils::get_odps_api_mode(const ObString &table_format_or_properties, 
+int ObSQLUtils::get_odps_api_mode(const ObString &table_format_or_properties,
                                     bool &is_odps_external_table,
                                     ObODPSGeneralFormat::ApiMode& mode)
 {
@@ -1867,7 +1866,7 @@ int ObSQLUtils::get_outline_key(ObIAllocator &allocator,
                                                                         raw_params,
                                                                         parse_mode))) {
       LOG_WARN("fail to fast_parameterize_sql", K(ret));
-    } else if (need_format 
+    } else if (need_format
           && OB_FAIL(ObSqlParameterization::formalize_sql_filter_hint(allocator, no_param_sql, no_param_sql, raw_params))) {
       LOG_WARN("failed to formalize fast parser sql", K(no_param_sql), K(ret));
     } else if (check_param && OB_FAIL(ObSqlParameterization::check_and_generate_param_info(raw_params,
@@ -1880,7 +1879,7 @@ int ObSQLUtils::get_outline_key(ObIAllocator &allocator,
         LOG_WARN("fail to check and generate not params",
                  K(ret), K(query_sql), K(no_param_sql));
       }
-    } else if (OB_UNLIKELY(NULL == (buf = (char *)allocator.alloc(format_len))) || 
+    } else if (OB_UNLIKELY(NULL == (buf = (char *)allocator.alloc(format_len))) ||
         OB_UNLIKELY(NULL == (buf2 = (char *)allocator.alloc(format_len)))) {
       ret = OB_ALLOCATE_MEMORY_FAILED;
       LOG_ERROR("fail to alloc buf", K(ret));
@@ -1888,7 +1887,7 @@ int ObSQLUtils::get_outline_key(ObIAllocator &allocator,
       LOG_WARN("fail to construct_sql", K(ret), K(no_param_sql), K(special_params.count()));
     } else if (FALSE_IT(constructed_sql.assign_ptr(buf, pos))) {
       // do nothing
-    } else if (need_format 
+    } else if (need_format
           && OB_FAIL(ObSqlParameterization::try_format_in_expr(constructed_sql, buf2, format_len, pos2, can_format))) {
       LOG_WARN("fail to format in expr", K(ret));
     } else {
@@ -2029,7 +2028,7 @@ int ObSQLUtils::reconstruct_sql(ObIAllocator &allocator, const ObStmt *stmt, ObS
 int ObISqlPrinter::do_print(ObIAllocator &allocator, ObString &result)
 {
   int ret = OB_SUCCESS;
-  //First try 64K buf on the stack, if it fails, then try 128K. 
+  //First try 64K buf on the stack, if it fails, then try 128K.
   //If it still fails, allocate 256K from the heap. If it continues to fail, expand twice each time.
   int64_t res_len = 0;
   SMART_VAR(char[OB_MAX_SQL_LENGTH], buf) {
@@ -2074,7 +2073,7 @@ int ObISqlPrinter::do_print(ObIAllocator &allocator, ObString &result)
       }
     }
   }
-  
+
   return ret;
 }
 
@@ -2122,10 +2121,10 @@ int ObSQLUtils::print_sql(char *buf,
   if (OB_SUCC(ret)) {
     switch (reconstruct_stmt->get_stmt_type()) {
     case stmt::T_SELECT: {
-      ObSelectStmtPrinter printer(buf, 
-                                  buf_len, 
-                                  &pos, 
-                                  static_cast<const ObSelectStmt*>(reconstruct_stmt), 
+      ObSelectStmtPrinter printer(buf,
+                                  buf_len,
+                                  &pos,
+                                  static_cast<const ObSelectStmt*>(reconstruct_stmt),
                                   schema_guard,
                                   print_params,
                                   param_store,
@@ -2141,11 +2140,11 @@ int ObSQLUtils::print_sql(char *buf,
       break;
     case stmt::T_REPLACE:
     case stmt::T_INSERT: {
-      ObInsertStmtPrinter printer(buf, 
-                                  buf_len, 
-                                  &pos, 
+      ObInsertStmtPrinter printer(buf,
+                                  buf_len,
+                                  &pos,
                                   static_cast<const ObInsertStmt*>(reconstruct_stmt),
-                                  schema_guard, 
+                                  schema_guard,
                                   print_params,
                                   param_store,
                                   session);
@@ -2157,11 +2156,11 @@ int ObSQLUtils::print_sql(char *buf,
     }
       break;
     case stmt::T_DELETE: {
-      ObDeleteStmtPrinter printer(buf, 
-                                  buf_len, 
-                                  &pos, 
+      ObDeleteStmtPrinter printer(buf,
+                                  buf_len,
+                                  &pos,
                                   static_cast<const ObDeleteStmt*>(reconstruct_stmt),
-                                  schema_guard, 
+                                  schema_guard,
                                   print_params,
                                   param_store,
                                   session);
@@ -2173,11 +2172,11 @@ int ObSQLUtils::print_sql(char *buf,
     }
       break;
     case stmt::T_UPDATE: {
-      ObUpdateStmtPrinter printer(buf, 
-                                  buf_len, 
-                                  &pos, 
+      ObUpdateStmtPrinter printer(buf,
+                                  buf_len,
+                                  &pos,
                                   static_cast<const ObUpdateStmt*>(reconstruct_stmt),
-                                  schema_guard, 
+                                  schema_guard,
                                   print_params,
                                   param_store,
                                   session);
@@ -2189,7 +2188,7 @@ int ObSQLUtils::print_sql(char *buf,
     }
       break;
     default: {
-      
+
     }
       break;
     }
@@ -2439,7 +2438,7 @@ int ObSQLUtils::extract_geo_query_range(const ObQueryRangeProvider &query_range_
                                                       mbr_filters))) {
       LOG_WARN("failed to get tablet ranges", K(ret));
     }
-  } 
+  }
   return ret;
 }
 
@@ -3671,7 +3670,7 @@ int64_t ObSqlFatalErrExtraInfoGuard::to_string(char *buf, const int64_t buf_len)
       dep_tables = &(query_ctx->global_dependency_tables_);
     }
     if (OB_NOT_NULL(exec_ctx_->get_my_session())) {
-      OZ (exec_ctx_->get_my_session()->get_sys_var_in_pc_str(sys_var_values));
+      sys_var_values = exec_ctx_->get_my_session()->get_sys_var_in_pc_str();
     }
   }
   // Print the schema information of the plan dependencies
@@ -3910,7 +3909,7 @@ int ObSqlGeoUtils::check_srid_by_srs(uint64_t tenant_id, uint64_t srid)
     LOG_USER_ERROR(OB_OPERATE_OVERFLOW, "srid", "UINT32_MAX");
   } else if (srid != 0 &&
       OB_FAIL(OTSRS_MGR->get_tenant_srs_guard(srs_guard))) {
-    LOG_WARN("failed to get srs guard", K(tenant_id), K(srid), K(ret));    
+    LOG_WARN("failed to get srs guard", K(tenant_id), K(srid), K(ret));
   } else if (OB_FAIL(srs_guard.get_srs_item(srid, srs))) {
     LOG_WARN("get srs failed", K(srid), K(ret));
   }
@@ -3947,7 +3946,7 @@ int ObPreCalcExprConstraint::assign(const ObPreCalcExprConstraint &other, common
   return ret;
 }
 
-int ObPreCalcExprConstraint::check_is_match(ObDatumObjParam &datum_param, 
+int ObPreCalcExprConstraint::check_is_match(ObDatumObjParam &datum_param,
                                             ObExecContext &exec_ctx,
                                             bool &is_match) const
 {
@@ -4465,7 +4464,7 @@ int ObSQLUtils::split_remote_object_storage_url(ObString &url, common::ObObjectS
     LOG_WARN("incorrect uri", K(ret));
   }
   LOG_DEBUG("check access info", K(access_id), K(access_key), K(host_name), K(url));
-  
+
   //fill storage_info
   if (OB_SUCC(ret) && OB_NOT_NULL(storage_info)) {
     int64_t pos = 0;
@@ -4529,9 +4528,9 @@ int ObSQLUtils::check_location_access_priv(const ObString &location, ObSQLSessio
 
 int ObSQLUtils::check_sql_map_expected_resource_group(const ObSqlCtx &context,
                                                       const ObResultSet &result,
-                                                      const ObResolverParams *resolve_ctx, 
-                                                      const ObStmt *stmt, 
-                                                      ObPCResourceMapRule &resource_map_rule) 
+                                                      const ObResolverParams *resolve_ctx,
+                                                      const ObStmt *stmt,
+                                                      ObPCResourceMapRule &resource_map_rule)
 {
   return OB_SUCCESS;
 }
@@ -4617,7 +4616,7 @@ int ObSQLUtils::check_column_with_res_mapping_rule(const ObResolverParams *resol
   const ObSQLSessionInfo *session_info = resolve_ctx->session_info_;
   const ObSchemaChecker *schema_checker = resolve_ctx->schema_checker_;
   const ParamStore *param_store = resolve_ctx->param_list_;
-  
+
   uint64_t db_id = session_info->get_database_id();
   uint64_t tenant_id = session_info->get_effective_tenant_id();
   const ObObj &value = const_expr->get_value();
@@ -4791,7 +4790,7 @@ int ObSQLUtils::check_sys_view_changed(const share::schema::ObTableSchema &old_v
     }
   }
   return ret;
-}            
+}
 
 bool ObSQLUtils::check_need_disconnect_parser_err(const int ret_code)
 {
@@ -4818,7 +4817,7 @@ bool ObSQLUtils::check_need_disconnect_parser_err(const int ret_code)
 }
 
 int ObSQLUtils::print_identifier_require_quotes(ObCollationType collation_type,
-                                                const ObString &ident, 
+                                                const ObString &ident,
                                                 bool &require)
 {
   int ret = OB_SUCCESS;

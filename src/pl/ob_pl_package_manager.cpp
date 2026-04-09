@@ -323,7 +323,7 @@ int ObPLPackageManager::read_and_exec_package_sql(ObMySQLProxy &sql_proxy,
       }
       // do not cache the compilation results of system packages into the PL cache when loading system packages.
       param.enable_pl_cache_ = false;
-      SMART_VAR(char[OB_MAX_SQL_LENGTH], sql_buf) {
+      HEAP_VAR(char[OB_MAX_SQL_LENGTH], sql_buf) {
         while (OB_SUCC(ret) && !eof) {
           if (FAILEDx(read_package_sql(stream, sql_buf, OB_MAX_SQL_LENGTH, eof))) {
             LOG_WARN("fail to read package sql data", K(ret));
@@ -1061,7 +1061,7 @@ int ObPLPackageManager::update_special_package_status(const ObPLResolveCtx &reso
 
   if (OB_FAIL(ret)) {
     // do nothing
-  } else if (get_tenant_id_by_object_id(package_id) == OB_SYS_TENANT_ID && 
+  } else if (get_tenant_id_by_object_id(package_id) == OB_SYS_TENANT_ID &&
                0 == package_spec->get_name().compare("DBMS_PROFILER")) {
   }
 
@@ -1528,7 +1528,7 @@ int ObPLPackageManager::get_package_item_state(const ObPLResolveCtx &resolve_ctx
         OX (need_destruct_package_state = false);
         if (OB_SUCC(ret)) {
           // TODO bin.lb: how about the memory?
-          // 
+          //
           OZ(package.get_frame_info().pre_alloc_exec_memory(exec_ctx));
         }
         int tmp_ret = OB_SUCCESS;
@@ -1553,7 +1553,7 @@ int ObPLPackageManager::get_package_item_state(const ObPLResolveCtx &resolve_ctx
           package_state->set_has_instantiated(true);
         }
         if (package.get_expr_op_size() > 0) {
-          //Memory leak 
+          //Memory leak
           //Must be reset before free expr_op_ctx!
           exec_ctx.reset_expr_op();
           exec_ctx.get_allocator().free(exec_ctx.get_expr_op_ctx_store());

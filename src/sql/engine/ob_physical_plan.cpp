@@ -16,6 +16,7 @@
 
 #define USING_LOG_PREFIX SQL_ENG
 #include "ob_physical_plan.h"
+#include "common/ob_smart_call.h"
 #include "sql/engine/ob_operator_factory.h"
 #include "share/ob_truncated_string.h"
 #include "sql/code_generator/ob_static_engine_cg.h"
@@ -1318,7 +1319,7 @@ int ObPhysicalPlan::update_cache_obj_stat(ObILibCacheCtx &ctx)
       }
     }
     if (OB_SUCC(ret)) {
-      // Update last_active_time_ last, because last_active_time_ is used to 
+      // Update last_active_time_ last, because last_active_time_ is used to
       // indicate whether the cache stat has been updated.
       stat_.last_active_time_ = stat_.gen_time_;
     }
@@ -1491,6 +1492,11 @@ int ObPhysicalPlan::set_feedback_info(ObExecContext &ctx)
     }
   }
   return ret;
+}
+
+int ObPhysicalPlan::set_feedback_info_with_stack_overflow_check(ObExecContext &ctx)
+{
+  return SMART_CALL(set_feedback_info(ctx));
 }
 
 int ObPhysicalPlan::set_all_local_session_vars(ObIArray<ObLocalSessionVar> *all_local_session_vars)

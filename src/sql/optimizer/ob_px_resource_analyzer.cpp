@@ -171,7 +171,7 @@ int ObPxResourceAnalyzer::analyze(
   // 2. Then simulate scheduling, every time a pair of dfo is scheduled, set child to done, then count how many unfinished dfo at the current moment
   // 3. Continue scheduling in this manner until all dfo scheduling is complete
   //
-  // ref: 
+  // ref:
   if (log_op_def::LOG_EXCHANGE == root_op.get_type() &&
       static_cast<const ObLogExchange *>(&root_op)->get_is_remote()) {
     max_parallel_thread_count = 0;
@@ -252,7 +252,8 @@ int ObPxResourceAnalyzer::convert_log_plan_to_nested_px_tree(ObLogicalOperator &
     LOG_WARN("failed to check stack overflow", K(ret));
   } else if (is_stack_overflow) {
     ret = OB_SIZE_OVERFLOW;
-    LOG_WARN("stack overflow, maybe too deep recursive", K(ret));
+    ob_abort();
+    LOG_WARN("stack overflow, maybe too deep recursive", K(ret), KCSTRING(lbt()));
   } else if (log_op_def::LOG_EXCHANGE == root_op.get_type() &&
       static_cast<const ObLogExchange *>(&root_op)->is_px_consumer()) {
     // The current exchange is a QC, abstract all the sub-plans below into a dfo tree

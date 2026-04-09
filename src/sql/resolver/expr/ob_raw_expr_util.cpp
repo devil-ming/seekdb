@@ -1100,8 +1100,8 @@ do {                                                                            
               } else {
                 param_type = iparam->get_pl_data_type();
               }
-              OZ (pl::ObPLResolver::set_question_mark_type( iexpr, 
-                                                            params.secondary_namespace_, 
+              OZ (pl::ObPLResolver::set_question_mark_type( iexpr,
+                                                            params.secondary_namespace_,
                                                             &param_type,
                                                             *(params.session_info_)));
             }
@@ -2955,7 +2955,7 @@ int ObRawExprUtils::extract_set_op_exprs(const ObRawExpr *raw_expr,
   } else {
     int64_t N = raw_expr->get_param_count();
     for (int64_t i = 0; OB_SUCC(ret) && i < N; ++i) {
-      if (OB_FAIL(SMART_CALL(extract_set_op_exprs(raw_expr->get_param_expr(i), 
+      if (OB_FAIL(SMART_CALL(extract_set_op_exprs(raw_expr->get_param_expr(i),
                                                   set_op_exprs)))) {
         LOG_WARN("failed to extract set op exprs", K(ret));
       }
@@ -4353,7 +4353,7 @@ bool ObRawExprUtils::need_column_conv(const ObRawExprResType &expected_type,
   // the precision of the data stored in datum may exceed that of inferenced type, so column_convert must be added.
   // e.g. 1/3 requires storing data with precision beyond inference to ensure that 1/3 * 3 equals 1 and not 0.9999
   if (!bret && strict_type_check) {
-    if (expected_type.get_type() == ObNumberType && 
+    if (expected_type.get_type() == ObNumberType &&
          expected_type.get_scale() == NUMBER_SCALE_UNKNOWN_YET &&
          expected_type.get_precision() == PRECISION_UNKNOWN_YET) {
       // do nothing
@@ -4389,8 +4389,8 @@ int ObRawExprUtils::build_column_conv_expr(ObRawExprFactory &expr_factory,
   CK(OB_NOT_NULL(session_info));
   CK(OB_NOT_NULL(column_schema));
   if (OB_SUCC(ret)) {
-    if (column_schema->is_fulltext_column() 
-        || column_schema->is_spatial_generated_column() 
+    if (column_schema->is_fulltext_column()
+        || column_schema->is_spatial_generated_column()
         || column_schema->is_multivalue_generated_column()
         || column_schema->is_multivalue_generated_array_column()) {
       // Full text column will not violate constraints, and data will not be stored, skip casting
@@ -4476,8 +4476,8 @@ int ObRawExprUtils::build_column_conv_expr(ObRawExprFactory &expr_factory,
       }
     }
     if (OB_FAIL(ret)) {
-    } else if (col_ref.is_fulltext_column() || 
-        col_ref.is_spatial_generated_column() || 
+    } else if (col_ref.is_fulltext_column() ||
+        col_ref.is_spatial_generated_column() ||
         col_ref.is_multivalue_generated_column() ||
         col_ref.is_multivalue_generated_array_column() ||
         col_ref.is_vec_index_column()) {
@@ -6736,7 +6736,7 @@ int ObRawExprUtils::check_composite_cast(ObRawExpr *&expr, ObSchemaChecker &sche
       }
     }
   }
-  
+
   return ret;
 }
 /*
@@ -6959,7 +6959,7 @@ int ObCollectionAttrBuilder::visit(const ObCollectionArrayType &coll_meta)
     LOG_WARN("failed to create offset attr expr", K(ret));
   } else if (OB_FAIL(expr_set_.append(attr_expr))) {
     LOG_WARN("failed to add attr expr", K(ret));
-  } 
+  }
   return ret;
 }
 
@@ -7851,7 +7851,7 @@ int ObRawExprUtils::process_window_complex_agg_expr(ObSQLSessionInfo *session_in
         ret = OB_INVALID_ARGUMENT;
         LOG_WARN("error argument.", K(ret));
       } else if (OB_FAIL(SMART_CALL(process_window_complex_agg_expr(session_info,
-                                                                    expr_factory, 
+                                                                    expr_factory,
                                                                     sub_expr->get_expr_type(),
                                                                     win_func, sub_expr, win_exprs)))) {
         LOG_WARN("failed to process window complex agg node.", K(ret));
@@ -8343,7 +8343,7 @@ int ObRawExprUtils::get_col_ref_expr_recursively(ObRawExpr *expr,
     LOG_WARN("failed to check stack overflow", K(ret), K(is_stack_overflow));
   } else if (is_stack_overflow) {
     ret = OB_SIZE_OVERFLOW;
-    LOG_WARN("too deep recursive", K(ret), K(is_stack_overflow));
+    LOG_WARN("too deep recursive", K(ret), K(is_stack_overflow), KCSTRING(lbt()));
   } else if (OB_ISNULL(expr)) {
     ret = OB_INVALID_ARGUMENT;
     LOG_WARN("expr passed in is NULL", K(ret));
@@ -8583,7 +8583,7 @@ int ObRawExprUtils::extract_match_against_filters(const ObIArray<ObRawExpr *> &f
   return ret;
 }
 
-int ObRawExprUtils::extract_match_exprs(ObRawExpr *expr, 
+int ObRawExprUtils::extract_match_exprs(ObRawExpr *expr,
                                         ObIArray<ObMatchFunRawExpr*> &match_exprs)
 {
   int ret = OB_SUCCESS;

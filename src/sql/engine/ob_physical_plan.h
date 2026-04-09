@@ -348,6 +348,17 @@ public:
   void set_record_plan_info(bool v) { need_record_plan_info_ = v; }
   bool need_record_plan_info() const { return need_record_plan_info_; }
   bool try_record_plan_info();
+  const common::ObString &get_rule_name() const { return stat_.rule_name_; }
+  inline void set_is_rewrite_sql(bool v) { stat_.is_rewrite_sql_ = v; }
+  inline bool is_rewrite_sql() const { return stat_.is_rewrite_sql_; }
+  inline void set_rule_version(int64_t version) { stat_.rule_version_ = version; }
+  inline int64_t get_rule_version() const { return stat_.rule_version_; }
+  inline void set_is_enable_udr(const bool v) { stat_.enable_udr_ = v; }
+  inline bool is_enable_udr() const { return stat_.enable_udr_; }
+  inline int set_rule_name(const common::ObString &rule_name)
+  {
+    return ob_write_string(allocator_, rule_name, stat_.rule_name_);
+  }
   inline bool get_enable_inc_direct_load() const { return enable_inc_direct_load_; }
   inline void set_enable_inc_direct_load(const bool enable_inc_direct_load)
   {
@@ -456,11 +467,11 @@ public:
   virtual int update_cache_obj_stat(ObILibCacheCtx &ctx);
   void calc_whether_need_trans();
   inline uint64_t get_min_cluster_version() const { return min_cluster_version_; }
-  inline void set_min_cluster_version(uint64_t curr_cluster_version) 
-  { 
+  inline void set_min_cluster_version(uint64_t curr_cluster_version)
+  {
     if (curr_cluster_version > min_cluster_version_) {
       min_cluster_version_ = curr_cluster_version;
-    } 
+    }
   }
   inline bool is_disable_auto_memory_mgr() const { return disable_auto_memory_mgr_; }
   inline void disable_auto_memory_mgr() { disable_auto_memory_mgr_ = true; }
@@ -469,6 +480,7 @@ public:
   inline ObLogicalPlanRawData& get_logical_plan() { return logical_plan_; }
   inline const ObLogicalPlanRawData& get_logical_plan()const { return logical_plan_; }
   int set_feedback_info(ObExecContext &ctx);
+  int set_feedback_info_with_stack_overflow_check(ObExecContext &ctx);
   int check_pdml_affected_rows(ObExecContext &ctx);
   int print_this_plan_info(ObExecContext &ctx);
   int get_all_spec_op(ObIArray<const ObOpSpec *> &simple_op_infos, const ObOpSpec &root_op_spec);
@@ -574,7 +586,7 @@ private:
   int16_t regexp_op_count_;
   // for like expression's optimization
   int16_t like_op_count_;
-  // for px fast path 
+  // for px fast path
   int16_t px_exchange_out_op_count_;
   bool is_sfu_;
   //if the stmt  contains user variable assignment

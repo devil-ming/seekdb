@@ -334,7 +334,7 @@ int ObMPQuery::process()
     session.set_last_trace_id(ObCurTraceId::get_trace_id());
     IGNORE_RETURN record_flt_trace(session);
     // clear thread-local variables used for queue waiting
-    // to prevent async callbacks from finishing before 
+    // to prevent async callbacks from finishing before
     // request_finish_callback, which may free the request.
     // this operation should be protected by the session lock.
     if (async_resp_used) {
@@ -367,7 +367,7 @@ int ObMPQuery::process()
     need_retry_ = true;
   }
 
-  // bugfix: 
+  // bugfix:
   // Must always set the pointer in THIS_WORKER to null
   THIS_WORKER.set_session(NULL); // clear session
 
@@ -380,7 +380,7 @@ int ObMPQuery::process()
 
 /*
  * Try to evaluate multiple update queries as a single query to optimize rpc cost
- * for details, please ref to 
+ * for details, please ref to
  */
 int ObMPQuery::try_batched_multi_stmt_optimization(sql::ObSQLSessionInfo &session,
                                                    ObSMConnection *conn,
@@ -994,7 +994,7 @@ OB_INLINE int ObMPQuery::do_process(ObSQLSessionInfo &session,
   int64_t sys_version = 0;
   SQL_INFO_GUARD(sql, session.get_cur_sql_id());
   ObIAllocator &allocator = CURRENT_CONTEXT->get_arena_allocator();
-  SMART_VAR(ObMySQLResultSet, result, session, allocator) {
+  HEAP_VAR(ObMySQLResultSet, result, session, allocator) {
     if (OB_FAIL(get_tenant_schema_info_(session.get_effective_tenant_id(),
                                         &cached_schema_info,
                                         schema_guard,
@@ -1235,6 +1235,8 @@ OB_INLINE int ObMPQuery::do_process(ObSQLSessionInfo &session,
         audit_record.table_scan_ = plan->contain_table_scan();
         audit_record.plan_id_ = plan->get_plan_id();
         audit_record.plan_hash_ = plan->get_plan_hash_value();
+        audit_record.rule_name_ = const_cast<char *>(plan->get_rule_name().ptr());
+        audit_record.rule_name_len_ = plan->get_rule_name().length();
       }
       if (NULL != plan || result.is_pl_stmt(result.get_stmt_type())) {
         audit_record.partition_hit_ = session.partition_hit().get_bool();
@@ -1633,7 +1635,7 @@ OB_INLINE int ObMPQuery::response_result(ObMySQLResultSet &result,
       ret = drv.response_result(result); \
       session.set_pl_query_sender(NULL); \
     }
-  
+
     if (result.is_pl_stmt(result.get_stmt_type())) {
       CMD_EXEC;
     } else {
@@ -1647,7 +1649,7 @@ OB_INLINE int ObMPQuery::response_result(ObMySQLResultSet &result,
   return ret;
 }
 
-inline void ObMPQuery::record_stat(const stmt::StmtType type, 
+inline void ObMPQuery::record_stat(const stmt::StmtType type,
                                    const int64_t end_time,
                                    const sql::ObSQLSessionInfo& session,
                                    const int64_t ret,

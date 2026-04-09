@@ -310,7 +310,7 @@ int ObResultSet::start_stmt()
   } else {
     if (phy_plan->has_link_udf() && ac) {
       my_session_.set_autocommit(false);
-      my_session_.set_restore_auto_commit(); 
+      my_session_.set_restore_auto_commit();
     }
     bool in_trans = my_session_.get_in_transaction();
     // 1. Regardless of whether it is within a transaction, as long as it is not a select and the plan is REMOTE, feedback to the client that it does not hit
@@ -474,7 +474,7 @@ bool ObResultSet::transaction_set_violation_and_retry(int &err, int64_t &retry_t
       LOG_WARN("failed to close plan", K(err), K(ret));
     } else {
       // OB_SNAPSHOT_DISCARDED should not retry now, see:
-      // 
+      //
       // so we remove this condition: OB_TRANSACTION_SET_VIOLATION == err
       if (/*OB_TRANSACTION_SET_VIOLATION == err &&*/ is_isolation_RR_or_SE) {
         // rewrite err in ObQueryRetryCtrl::test_and_save_retry_state().
@@ -498,7 +498,7 @@ OB_INLINE int ObResultSet::do_open_plan(ObExecContext &ctx)
   int ret = OB_SUCCESS;
   ctx.reset_op_env();
   exec_result_ = &(ctx.get_task_exec_ctx().get_execute_result());
-  rootserver::ObMViewMaintenanceService *mview_maintenance_service = 
+  rootserver::ObMViewMaintenanceService *mview_maintenance_service =
                                         MTL(rootserver::ObMViewMaintenanceService*);
   if (stmt::T_PREPARE != stmt_type_) {
     if (OB_FAIL(ctx.init_phy_op(physical_plan_->get_phy_operator_size()))) {
@@ -587,7 +587,7 @@ int ObResultSet::set_mysql_info()
     if (OB_NOT_NULL(buffer)) {
       warning_cnt = buffer->get_total_warning_count();
     }
-    int result_len = snprintf(message_ + pos, MSG_SIZE - pos, OB_LOAD_DATA_MSG_FMT, 
+    int result_len = snprintf(message_ + pos, MSG_SIZE - pos, OB_LOAD_DATA_MSG_FMT,
                               plan_ctx->get_row_matched_count(), plan_ctx->get_row_deleted_count(),
                               plan_ctx->get_row_duplicated_count(), warning_cnt);
     if (OB_UNLIKELY(result_len < 0) || OB_UNLIKELY(result_len >= MSG_SIZE - pos)) {
@@ -750,7 +750,7 @@ int ObResultSet::deal_feedback_info(ObPhysicalPlan *physical_plan, bool is_rollb
       }
     }
     if (physical_plan->try_record_plan_info()) {
-      if (OB_FAIL(physical_plan->set_feedback_info(ctx))) {
+      if (OB_FAIL(physical_plan->set_feedback_info_with_stack_overflow_check(ctx))) {
         LOG_WARN("fail to set feed_back info", K(ret));
       } else {
         physical_plan->set_record_plan_info(false);
@@ -1245,7 +1245,7 @@ bool ObResultSet::need_end_trans_callback() const
     if (OB_FAIL(my_session_.get_autocommit(ac))) {
       LOG_ERROR("fail to get autocommit", K(ret));
     } else {}
-    if (OB_LIKELY(NULL != physical_plan_) && 
+    if (OB_LIKELY(NULL != physical_plan_) &&
                OB_LIKELY(physical_plan_->is_need_trans())) {
       need = (true == ObSqlTransUtil::plan_can_end_trans(ac, explicit_start_trans)) &&
           (false == ObSqlTransUtil::is_remote_trans(ac, explicit_start_trans, physical_plan_->get_plan_type()));
@@ -1474,9 +1474,9 @@ int ObResultSet::construct_field_name(const common::ObIArray<ObPCParam *> &raw_p
 {
   int ret = OB_SUCCESS;
   for (int64_t i = 0; OB_SUCC(ret) && i < field_columns_.count(); i++) {
-    if (OB_FAIL(construct_display_field_name(field_columns_.at(i), 
-                                             raw_params, 
-                                             is_first_parse, 
+    if (OB_FAIL(construct_display_field_name(field_columns_.at(i),
+                                             raw_params,
+                                             is_first_parse,
                                              session_info))) {
       LOG_WARN("failed to construct display name", K(ret), K(field_columns_.at(i)));
     } else {
@@ -1648,7 +1648,7 @@ void ObResultSet::replace_lob_type(const ObSQLSessionInfo &session,
     // for 8.x always return MYSQL_TYPE_BLOB, and do text type judge in mysql-jdbc by length
     mfield.type_ = obmysql::EMySQLFieldType::MYSQL_TYPE_BLOB;
   } else if (mfield.type_ == obmysql::EMySQLFieldType::MYSQL_TYPE_JSON) {
-    // for mysql 5.x json response as plain text not binary, but the charset always binary 
+    // for mysql 5.x json response as plain text not binary, but the charset always binary
     mfield.charsetnr_ = common::CS_TYPE_BINARY;
   }
 }

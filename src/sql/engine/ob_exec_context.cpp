@@ -94,7 +94,7 @@ int ObDiagnosisManager::do_diagnosis(ObBitVector &skip, int64_t limit_num) {
         if (skip.at(idx)) {
           continue;
         }
-        
+
         if (has_col_info) {
           ObString cur_col_name = col_names_.at(i);
           if (OB_FAIL(err_msg.append_fmt("fail to scan file %.*s at line %ld for column %.*s, error: %s",
@@ -212,6 +212,7 @@ ObExecContext::ObExecContext(ObIAllocator &allocator)
     deterministic_udf_cache_allocator_("UDFCACHE", OB_MALLOC_NORMAL_BLOCK_SIZE, MTL_ID()),
     current_granule_type_(OB_GRANULE_UNINITIALIZED)
 {
+  exec_stat_collector_.init(&allocator_);
 }
 
 ObExecContext::~ObExecContext()
@@ -219,7 +220,7 @@ ObExecContext::~ObExecContext()
   row_id_list_array_.reset();
   destroy_eval_allocator();
   reset_op_ctx();
-  
+
   if (NULL != phy_plan_ctx_) {
     if (!THIS_WORKER.has_req_flag()) {
       // For background threads, need to call destructor
@@ -1237,7 +1238,7 @@ int ObExecContext::get_enumset_meta_by_subschema_id(uint16_t subschema_id,
 
 int ObExecContext::get_subschema_id_by_udt_id(uint64_t udt_type_id,
                                               uint16_t &subschema_id,
-                                              share::schema::ObSchemaGetterGuard *schema_guard) 
+                                              share::schema::ObSchemaGetterGuard *schema_guard)
 {
   int ret = OB_SUCCESS;
   if (OB_ISNULL(phy_plan_ctx_)) {
@@ -1252,7 +1253,7 @@ int ObExecContext::get_subschema_id_by_udt_id(uint64_t udt_type_id,
 
 int ObExecContext::get_subschema_id_by_collection_elem_type(ObNestedType coll_type,
                                                             const ObDataType &elem_type,
-                                                            uint16_t &subschema_id) 
+                                                            uint16_t &subschema_id)
 {
   int ret = OB_SUCCESS;
   if (OB_ISNULL(phy_plan_ctx_)) {
@@ -1307,7 +1308,7 @@ int ObExecContext::get_subschema_id_by_type_info(const ObObjMeta &obj_meta,
   return ret;
 }
 
-int ObExecContext::get_subschema_id_by_type_string(const ObString &type_string, uint16_t &subschema_id) 
+int ObExecContext::get_subschema_id_by_type_string(const ObString &type_string, uint16_t &subschema_id)
 {
   int ret = OB_SUCCESS;
   if (OB_ISNULL(phy_plan_ctx_)) {

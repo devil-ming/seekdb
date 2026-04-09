@@ -411,29 +411,30 @@ int ObMultiVersionSchemaService::get_schema(const ObSchemaMgr *mgr,
     } else if (is_sys_tenant(tenant_id)) {
       schema = hard_code_schema;
     } else {
-      ObTableSchema new_schema;
-      if (OB_FAIL(schema_cache_.get_schema(TABLE_SCHEMA,
-                                           tenant_id,
-                                           schema_id,
-                                           OB_CORE_SCHEMA_VERSION ,
-                                           handle,
-                                           schema))) {
-        if (ret != OB_ENTRY_NOT_EXIST) {
-          LOG_WARN("get schema from cache failed", KR(ret), K(tenant_id),
-                   K(schema_type), K(schema_id), K(schema_version));
-        } else if (OB_FAIL(new_schema.assign(*hard_code_schema))) { // overwrite ret
-          LOG_WARN("fail to assign all core schema", KR(ret), K(tenant_id));
-        } else if (OB_FAIL(ObSchemaUtils::construct_tenant_space_full_table(
-                  tenant_id, new_schema))) {
-          LOG_WARN("fail to construct tenant's __all_core_table schema", KR(ret), K(tenant_id));
-        } else if (OB_FAIL(schema_cache_.put_and_fetch_schema(schema_type,
-                                                              tenant_id,
-                                                              schema_id,
-                                                              OB_CORE_SCHEMA_VERSION,
-                                                              new_schema,
-                                                              handle,
-                                                              schema))) {
-          LOG_WARN("fail to push back tenant's __all_core_table schema", KR(ret), K(tenant_id));
+      HEAP_VAR(ObTableSchema, new_schema) {
+        if (OB_FAIL(schema_cache_.get_schema(TABLE_SCHEMA,
+                                             tenant_id,
+                                             schema_id,
+                                             OB_CORE_SCHEMA_VERSION ,
+                                             handle,
+                                             schema))) {
+          if (ret != OB_ENTRY_NOT_EXIST) {
+            LOG_WARN("get schema from cache failed", KR(ret), K(tenant_id),
+                     K(schema_type), K(schema_id), K(schema_version));
+          } else if (OB_FAIL(new_schema.assign(*hard_code_schema))) { // overwrite ret
+            LOG_WARN("fail to assign all core schema", KR(ret), K(tenant_id));
+          } else if (OB_FAIL(ObSchemaUtils::construct_tenant_space_full_table(
+                    tenant_id, new_schema))) {
+            LOG_WARN("fail to construct tenant's __all_core_table schema", KR(ret), K(tenant_id));
+          } else if (OB_FAIL(schema_cache_.put_and_fetch_schema(schema_type,
+                                                                tenant_id,
+                                                                schema_id,
+                                                                OB_CORE_SCHEMA_VERSION,
+                                                                new_schema,
+                                                                handle,
+                                                                schema))) {
+            LOG_WARN("fail to push back tenant's __all_core_table schema", KR(ret), K(tenant_id));
+          }
         }
       }
     }
@@ -2345,7 +2346,7 @@ int ObMultiVersionSchemaService::refresh_and_add_schema(const ObIArray<uint64_t>
       } else if (check_bootstrap) {
         // The schema refresh triggered by the heartbeat is forbidden in the bootstrap phase,
         // and it needs to be judged in the schema_refresh_mutex_lock
-        // 
+        //
         int64_t baseline_schema_version = OB_INVALID_VERSION;
         if (OB_FAIL(get_baseline_schema_version(OB_SYS_TENANT_ID, true/*auto_update*/, baseline_schema_version))) {
           LOG_WARN("fail to get baseline_schema_version", K(ret));
@@ -2411,7 +2412,7 @@ int ObMultiVersionSchemaService::get_schema_version_by_timestamp(
 // Unlike the startup time, liboblog assumes that the Partition set of the tenant's initial user table is empty.
 // In order to ensure that the ddl is not output and the Partition is not obtained,
 // the schema_version needs to be as small as possible.
-// 
+//
 // Discuss several situations:
 // 1. OB_DDL_ADD_TENANT: Indicates a tenant created in a non-split mode,
 //  and the schema_version can be the schema_version corresponding to OB_DDL_ADD_TENANT;

@@ -16,6 +16,7 @@
 
 #define USING_LOG_PREFIX SQL_REWRITE
 #include "ob_transform_rule.h"
+#include "common/ob_smart_call.h"
 #include "sql/optimizer/ob_optimizer.h"
 #include "sql/optimizer/ob_optimizer_context.h"
 #include "sql/rewrite/ob_transformer_impl.h"
@@ -157,7 +158,7 @@ int ObTransformRule::transform(ObDMLStmt *&stmt,
   if (OB_ISNULL(stmt)) {
     ret = OB_INVALID_ARGUMENT;
     LOG_WARN("invalid argument", K(ret));
-  } else if (OB_FAIL(transform_stmt_recursively(parent_stmts, 0, stmt))) {
+  } else if (OB_FAIL(SMART_CALL(transform_stmt_recursively(parent_stmts, 0, stmt)))) {
     LOG_WARN("failed to transform stmt recursively", K(ret));
   } else if (OB_FAIL(adjust_transform_types(transform_types))) {
     LOG_WARN("failed to adjust transform types", K(ret));
@@ -187,8 +188,8 @@ int ObTransformRule::transform_stmt_recursively(common::ObIArray<ObParentDMLStmt
   } else if (OB_FAIL(check_stack_overflow(is_stack_overflow))) {
     LOG_WARN("check stack overflow failed", K(current_level), K(is_stack_overflow), K(ret));
   } else if (is_stack_overflow) {
-    ret = OB_SIZE_OVERFLOW;
-    LOG_WARN("too deep recursive", K(current_level), K(is_stack_overflow), K(ret));
+    LOG_INFO("stack usage is high before transform recursion, continue with smart call protection",
+             K(current_level), K(is_stack_overflow));
   } else if (stmt->is_select_stmt() &&
         OB_FAIL(static_cast<const ObSelectStmt *>(stmt)->get_set_stmt_size(size))) {
     LOG_WARN("failed to get set stm size", K(ret));
@@ -229,8 +230,8 @@ int ObTransformRule::transform_pre_order(common::ObIArray<ObParentDMLStmt> &pare
   } else if (OB_FAIL(check_stack_overflow(is_stack_overflow))) {
     LOG_WARN("check stack overflow failed", K(current_level), K(is_stack_overflow), K(ret));
   } else if (is_stack_overflow) {
-    ret = OB_SIZE_OVERFLOW;
-    LOG_WARN("too deep recursive", K(current_level), K(is_stack_overflow), K(ret));
+    LOG_INFO("stack usage is high before pre-order transform, continue with smart call protection",
+             K(current_level), K(is_stack_overflow));
   } else if (OB_FAIL(transform_self(parent_stmts, current_level, stmt))) {
     LOG_WARN("failed to transform self statement", K(ret));
   } else if (OB_FAIL(transform_children(parent_stmts, current_level, stmt))) {
@@ -252,8 +253,8 @@ int ObTransformRule::transform_post_order(ObIArray<ObParentDMLStmt> &parent_stmt
   } else if (OB_FAIL(check_stack_overflow(is_stack_overflow))) {
     LOG_WARN("check stack overflow failed", K(current_level), K(is_stack_overflow), K(ret));
   } else if (is_stack_overflow) {
-    ret = OB_SIZE_OVERFLOW;
-    LOG_WARN("too deep recursive", K(current_level), K(is_stack_overflow), K(ret));
+    LOG_INFO("stack usage is high before post-order transform, continue with smart call protection",
+             K(current_level), K(is_stack_overflow));
   } else if (OB_FAIL(transform_children(parent_stmts, current_level, stmt))) {
     LOG_WARN("failed to transform children stmt", K(ret));
   } else if (OB_FAIL(transform_self(parent_stmts, current_level, stmt))) {
@@ -275,8 +276,8 @@ int ObTransformRule::transform_root_only(ObIArray<ObParentDMLStmt> &parent_stmts
   } else if (OB_FAIL(check_stack_overflow(is_stack_overflow))) {
     LOG_WARN("check stack overflow failed", K(current_level), K(is_stack_overflow), K(ret));
   } else if (is_stack_overflow) {
-    ret = OB_SIZE_OVERFLOW;
-    LOG_WARN("too deep recursive", K(current_level), K(is_stack_overflow), K(ret));
+    LOG_INFO("stack usage is high before root-only transform, continue with smart call protection",
+             K(current_level), K(is_stack_overflow));
   } else if (OB_FAIL(transform_self(parent_stmts, current_level, stmt))) {
     LOG_WARN("failed to transform self statement", K(ret));
   } else if (OB_FAIL(transform_temp_tables(parent_stmts, current_level, stmt))) {
@@ -335,7 +336,7 @@ int ObTransformRule::accept_transform(common::ObIArray<ObParentDMLStmt> &parent_
       LOG_WARN("failed to evaluate cost for the transformed stmt", K(ret));
     } else if ((!check_original_plan && stmt_cost_ >= 0) || !is_expected) {
       trans_happened = is_expected && (ignore_cost || trans_stmt_cost < stmt_cost_);
-    } else if (OB_FAIL(evaluate_cost(eval_parent_stmts, stmt, false, stmt_cost_, is_original_expected, 
+    } else if (OB_FAIL(evaluate_cost(eval_parent_stmts, stmt, false, stmt_cost_, is_original_expected,
                                      check_original_plan ? check_ctx : NULL))) {
       LOG_WARN("failed to evaluate cost for the origin stmt", K(ret));
     } else if (!is_original_expected) {
@@ -458,7 +459,7 @@ int ObTransformRule::evaluate_cost(common::ObIArray<ObParentDMLStmt> &parent_stm
         }
         if (OB_SUCC(ret)) {
           if (OB_FAIL(eval_cost_helper.recover_context(*ctx_->exec_ctx_->get_physical_plan_ctx(),
-                                                      *ctx_->exec_ctx_->get_stmt_factory()->get_query_ctx(), 
+                                                      *ctx_->exec_ctx_->get_stmt_factory()->get_query_ctx(),
                                                       *ctx_))) {
             LOG_WARN("failed to recover context", K(ret));
           } else if (OB_FAIL(ObTransformUtils::free_stmt(*ctx_->stmt_factory_, root_stmt))) {
@@ -471,8 +472,8 @@ int ObTransformRule::evaluate_cost(common::ObIArray<ObParentDMLStmt> &parent_stm
   return ret;
 }
 
-// This function primarily handles scenarios where cost-based rewrites are applied to temporary table queries. 
-// Since `PredicateMoveAround` within the temp table query tree cannot push down external common filters, 
+// This function primarily handles scenarios where cost-based rewrites are applied to temporary table queries.
+// Since `PredicateMoveAround` within the temp table query tree cannot push down external common filters,
 // an additional push-down step is performed here.
 int ObTransformRule::prepare_root_stmt_with_temp_table_filter(ObDMLStmt &root_stmt, ObDMLStmt *&root_stmt_with_filter)
 {
@@ -1000,8 +1001,8 @@ int ObTryTransHelper::recover(ObQueryCtx *query_ctx)
   return ret;
 }
 
-int ObTryTransHelper::finish(bool trans_happened, 
-                             ObQueryCtx *query_ctx, 
+int ObTryTransHelper::finish(bool trans_happened,
+                             ObQueryCtx *query_ctx,
                              ObTransformerCtx *trans_ctx) {
   int ret = OB_SUCCESS;
   if (NULL == query_ctx || NULL == trans_ctx) {
@@ -1049,7 +1050,7 @@ int ObEvalCostHelper::recover_context(ObPhysicalPlanCtx &phy_plan_ctx,
                                       ObTransformerCtx &trans_ctx)
 {
   int ret = OB_SUCCESS;
-  
+
   // query context
   query_ctx.question_marks_count_ = phy_plan_ctx.get_param_store().count();
   if (OB_FAIL(try_trans_helper_.recover(&query_ctx))) {

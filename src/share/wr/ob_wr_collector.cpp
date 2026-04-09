@@ -137,7 +137,7 @@ int ObWrCollector::collect()
   } else if (OB_FAIL(collect_res_mgr_sysstat())) {
     LOG_WARN("failed to collect res mgr sysstat", KR(ret));
   }
-  
+
   if (OB_SUCC(ret) && OB_UNLIKELY(ERRSIM_WR_SNAPSHOT_COLLECTOR_FAILURE)) {
     ret = ERRSIM_WR_SNAPSHOT_COLLECTOR_FAILURE;
     LOG_WARN("errsim for wr snapshot collector", KR(ret), KPC(this));
@@ -318,7 +318,7 @@ int ObWrCollector::collect_ash()
         part_locations))) {
       LOG_WARN("fail to get virtual table location", KR(ret), K(OB_ALL_VIRTUAL_ASH_TID));
   } else {
-    SMART_VAR(ObISQLClient::ReadResult, res)
+    HEAP_VAR(ObISQLClient::ReadResult, res)
     {
       // iterate every partition
       for (int64_t i = 0; OB_SUCC(ret) && i < part_locations.count(); i++) {
@@ -434,13 +434,13 @@ int ObWrCollector::collect_ash()
                   skip_null_error, skip_column_error, default_value);
               EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "proxy_sid", ash.proxy_sid_, int64_t,
                   skip_null_error, skip_column_error, default_value);
-              EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "delta_read_io_requests", ash.delta_read_io_requests_, 
+              EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "delta_read_io_requests", ash.delta_read_io_requests_,
                   int64_t, skip_null_error, skip_column_error, default_value);
-              EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "delta_read_io_bytes", ash.delta_read_io_bytes_, 
+              EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "delta_read_io_bytes", ash.delta_read_io_bytes_,
                   int64_t, skip_null_error, skip_column_error, default_value);
-              EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "delta_write_io_requests", ash.delta_write_io_requests_, 
+              EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "delta_write_io_requests", ash.delta_write_io_requests_,
                   int64_t, skip_null_error, skip_column_error, default_value);
-              EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "delta_write_io_bytes", ash.delta_write_io_bytes_, 
+              EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "delta_write_io_bytes", ash.delta_write_io_bytes_,
                   int64_t, skip_null_error, skip_column_error, default_value);
 
               char plan_hash_char[64] = "";
@@ -602,7 +602,7 @@ int ObWrCollector::collect_ash()
               }
             }
           }
-        }      
+        }
       }
       // record snapshot_end_time_
       int tmp_ret = OB_SUCCESS;
@@ -614,9 +614,9 @@ int ObWrCollector::collect_ash()
   if (OB_LIKELY(collected_ash_row_count != 0)) {
     EVENT_ADD(WR_COLLECTED_ASH_ROW_COUNT, collected_ash_row_count);
   }
-  LOG_INFO("WR collected ash finished", K(ret), K(collected_ash_row_count), 
+  LOG_INFO("WR collected ash finished", K(ret), K(collected_ash_row_count),
                                         K(snapshot_begin_time_),
-                                        K(snapshot_end_time_), 
+                                        K(snapshot_end_time_),
                                         K(collected_ash_min_sample_time));
 
   return ret;
@@ -823,7 +823,7 @@ int ObWrCollector::collect_sqlstat()
   int64_t topnsql = -1;
   {
     // read wr control`s top N SQL
-    SMART_VAR(ObISQLClient::ReadResult, res)
+    HEAP_VAR(ObISQLClient::ReadResult, res)
     {
       ObMySQLResult *result = nullptr;
       int64_t query_timeout = timeout_ts_ - common::ObTimeUtility::current_time();
@@ -857,7 +857,7 @@ int ObWrCollector::collect_sqlstat()
   }
 
   if (OB_SUCC(ret) && topnsql != -1) {
-    SMART_VAR(ObISQLClient::ReadResult, res)
+    HEAP_VAR(ObISQLClient::ReadResult, res)
     {
       ObMySQLResult *result = nullptr;
       int64_t query_timeout = timeout_ts_ - common::ObTimeUtility::current_time();
@@ -893,7 +893,7 @@ int ObWrCollector::collect_sqlstat()
                   "    cast(sum(partition_delta) as SIGNED INTEGER ) as partition_delta, cast(sum(nested_sql_total) as SIGNED INTEGER ) as nested_sql_total, "
                   "    cast(sum(nested_sql_delta) as SIGNED INTEGER ) as nested_sql_delta ,source_ip, source_port , cast(sum(route_miss_total) as SIGNED INTEGER ) as route_miss_total, "
                   "    cast(sum(route_miss_delta) as SIGNED INTEGER ) as route_miss_delta , first_load_time,  cast(sum(plan_cache_hit_total) as SIGNED INTEGER ) as plan_cache_hit_total, "
-                  "    cast(sum(plan_cache_hit_delta) as SIGNED INTEGER ) as plan_cache_hit_delta " 
+                  "    cast(sum(plan_cache_hit_delta) as SIGNED INTEGER ) as plan_cache_hit_delta "
                   "from oceanbase.__all_virtual_sqlstat   "
                   "where (sql_id,plan_hash) in  (   "
                   "select sql_id, plan_hash   "
@@ -995,7 +995,7 @@ int ObWrCollector::collect_sqlstat()
             EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "route_miss_delta", sqlstat.route_miss_delta_, int64_t, null_error, skip_column_error, default_value);
             EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "plan_cache_hit_total", sqlstat.plan_cache_hit_total_, int64_t, null_error, skip_column_error, default_value);
             EXTRACT_INT_FIELD_MYSQL_WITH_DEFAULT_VALUE(*result, "plan_cache_hit_delta", sqlstat.plan_cache_hit_delta_, int64_t, null_error, skip_column_error, default_value);
-            
+
             if (OB_SUCC(ret)) {
               if (OB_FAIL(result->get_timestamp("first_load_time", nullptr, sqlstat.first_load_time_))) {
                 if (OB_ERR_NULL_VALUE == ret || OB_ERR_COLUMN_NOT_FOUND == ret) {
@@ -1176,7 +1176,7 @@ int ObWrCollector::update_sqlstat()
       ObUpdateSqlStatOp op;
       if (OB_FAIL(plan_cache->foreach_cache_obj(op))) {
         LOG_WARN("fail to traverse tmp sql stat map", K(ret));
-      } 
+      }
     } else {
       LOG_WARN("failed to get library cache", K(ret));
     }
@@ -1210,7 +1210,7 @@ int ObWrCollector::update_last_snapshot_end_time()
     } else if (OB_FAIL(dml_splicer.add_time_column("end_interval_time", snapshot_end_time_))) {
       LOG_WARN("failed to add column end_interval_time", KR(ret), K(snapshot_end_time_));
     } else if (OB_FAIL(dml_splicer.add_column("snap_flag", snapshot_ahead_
-                                              ? ObWrSnapshotFlag::LAST_AHEAD_SNAPSHOT 
+                                              ? ObWrSnapshotFlag::LAST_AHEAD_SNAPSHOT
                                               : ObWrSnapshotFlag::LAST_SCHEDULED_SNAPSHOT))) {
       LOG_WARN("failed to add column snap_flag", KR(ret));
     } else if (OB_FAIL(dml_splicer.add_column(true, "startup_time"))) {
@@ -1229,7 +1229,7 @@ int ObWrCollector::update_last_snapshot_end_time()
       LOG_WARN("invalid affected rows", KR(ret), K(affected_rows), K(sql));
     } else {
       LOG_DEBUG("success to insert snapshot info", K(sql));
-    } 
+    }
   }
   return ret;
 }
@@ -1252,7 +1252,7 @@ int ObWrCollector::collect_sqltext()
         ret = OB_TIMEOUT;
         LOG_WARN("wr snapshot timeout", KR(ret), K_(timeout_ts));
       } else if (OB_FAIL(sql.assign_fmt(
-                  "select /*+ workload_repository_snapshot query_timeout(%ld) */ " 
+                  "select /*+ workload_repository_snapshot query_timeout(%ld) */ "
                     " sql_id, query_sql , "
                     " sql_type from oceanbase.__all_virtual_sqlstat "
                     "where sql_id in (select distinct sql_id from oceanbase.__all_virtual_wr_sqlstat where "
@@ -1293,8 +1293,7 @@ int ObWrCollector::collect_sqltext()
               int64_t affected_rows = 0;
               uint64_t exec_tenant_id = gen_meta_tenant_id(tenant_id);
               query_timeout = timeout_ts_ - common::ObTimeUtility::current_time();
-              ObCStringHelper helper;
-              const char* query_sql = helper.convert(ObHexEscapeSqlStr(ObString::make_string(sqltext.query_sql_)));
+              const char* query_sql = to_cstring(ObHexEscapeSqlStr(ObString::make_string(sqltext.query_sql_)));
               if (OB_UNLIKELY(query_timeout <= 0)) {
                 ret = OB_TIMEOUT;
                 LOG_WARN("wr snapshot timeout", KR(tmp_ret), K_(timeout_ts));
@@ -1302,7 +1301,7 @@ int ObWrCollector::collect_sqltext()
                   "insert /*+ workload_repository_snapshot query_timeout(%ld) */ into %s "
                   "(CLUSTER_ID,SNAP_ID, SQL_ID, QUERY_SQL, SQL_TYPE) values "
                   "(%ld, %ld, '%s',\"%.*s\" , %ld)",
-                  query_timeout, OB_WR_SQLTEXT_TNAME, 
+                  query_timeout, OB_WR_SQLTEXT_TNAME,
                   cluster_id, snap_id_, sqltext.sql_id_,
                   static_cast<int>(strlen(query_sql)), query_sql, sqltext.sql_type_))) {
                 LOG_WARN("failed to assign insert query string", KR(tmp_ret));
@@ -1313,7 +1312,7 @@ int ObWrCollector::collect_sqltext()
                 LOG_WARN("unexpected affected_rows", KR(tmp_ret), K(affected_rows), K(insert_sql));
               }
             }
-            
+
 
           }
         } // end while
@@ -1414,7 +1413,7 @@ int ObWrCollector::collect_sql_plan()
           EXTRACT_STRBUF_FIELD_MYSQL_SKIP_RET(*result, "qblock_name", sqlplan.qblock_name_, sizeof(sqlplan.qblock_name_), tmp_real_str_len);
           EXTRACT_STRBUF_FIELD_MYSQL_SKIP_RET(*result, "remarks", sqlplan.remarks_, sizeof(sqlplan.remarks_), tmp_real_str_len);
           EXTRACT_STRBUF_FIELD_MYSQL_SKIP_RET(*result, "other_xml", sqlplan.other_xml_, sizeof(sqlplan.other_xml_), tmp_real_str_len);
-          
+
           if (OB_SUCC(ret)) {
             if (OB_FAIL(dml_splicer.add_pk_column(K(cluster_id)))) {
               LOG_WARN("failed to add column cluster_id", KR(ret), K(cluster_id));
@@ -1697,7 +1696,7 @@ int ObWrCollector::get_begin_interval_time(int64_t &begin_interval_time)
   return ret;
 }
 
-int ObWrCollector::check_if_ignore_errorcode(int error_code) 
+int ObWrCollector::check_if_ignore_errorcode(int error_code)
 {
   int ret = error_code;
   if (error_code == OB_ERR_PRIMARY_KEY_DUPLICATE || error_code == OB_ERR_DATA_TRUNCATED ||
@@ -1705,7 +1704,7 @@ int ObWrCollector::check_if_ignore_errorcode(int error_code)
     ret = OB_SUCCESS;
   }
   return ret;
-} 
+}
 
 int ObWrDeleter::do_delete()
 {
