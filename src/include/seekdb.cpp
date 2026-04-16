@@ -3225,7 +3225,17 @@ int seekdb_begin(SeekdbHandle handle) {
             return SEEKDB_ERROR_QUERY_FAILED;
         }
     }
-    
+    // Session flag can be cleared while ObInnerSQLConnection::is_in_trans_ is still true (e.g.
+    // DDL or Room invalidation trigger paths). start_transaction_inner then fails with
+    // "inner conn is already in trans". Roll back to resync before START TRANSACTION.
+    if (conn->embed_conn->is_in_trans()) {
+        conn->embed_conn->set_is_in_trans(true);
+        if (OB_FAIL(conn->embed_conn->rollback())) {
+            set_error(conn, "Failed to rollback orphan inner transaction state");
+            return SEEKDB_ERROR_QUERY_FAILED;
+        }
+    }
+
     // Start new transaction
     // This is equivalent to executing "START TRANSACTION" SQL statement in MySQL 5.7
     if (OB_FAIL(conn->embed_conn->start_transaction(OB_SYS_TENANT_ID))) {
