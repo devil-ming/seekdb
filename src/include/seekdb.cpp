@@ -4555,7 +4555,21 @@ int seekdb_stmt_execute(SeekdbStmt stmt) {
             param_idx++;
         }
     }
-    
+    if (is_write_sql(final_sql.c_str())) {
+        int64_t affected_rows = 0;
+        int ret = seekdb_execute_update(static_cast<SeekdbHandle>(conn), final_sql.c_str(), &affected_rows);
+        if (ret != SEEKDB_SUCCESS) {
+            stmt_data->last_error = conn->last_error;
+            return ret;
+        }
+        if (stmt_data->result_set) {
+            delete stmt_data->result_set;
+            stmt_data->result_set = nullptr;
+        }
+        stmt_data->executed = true;
+        return SEEKDB_SUCCESS;
+    }
+
     // Execute the final SQL
     SeekdbResult result = nullptr;
     int ret = seekdb_query(conn, final_sql.c_str(), &result);

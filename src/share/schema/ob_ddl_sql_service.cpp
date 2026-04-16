@@ -33,6 +33,7 @@ int ObDDLSqlService::log_operation(
   common::ObSqlString *public_sql_string /*= NULL*/)
 {
   int ret = OB_SUCCESS;
+  ObString ddl_stmt_for_log = schema_operation.ddl_stmt_str_;
   ObString ddl_str_hex;
   ObSqlString hex_sql_string;
   ObSqlString tmp_sql_string;
@@ -54,6 +55,12 @@ int ObDDLSqlService::log_operation(
   } else if (OB_INVALID_TENANT_ID == tenant_id) {
     sql_tenant_id = OB_SYS_TENANT_ID;
   }
+#ifdef __ANDROID__
+  // Avoid large DDL text in __all_ddl_operation on embedded Android (LOB path).
+  if (!ddl_stmt_for_log.empty()) {
+    ddl_stmt_for_log = ObString::make_empty_string();
+  }
+#endif
   if (OB_UNLIKELY(!schema_operation.is_valid())) {
     ret = OB_INVALID_ARGUMENT;
     LOG_WARN("schema_operation is invalid", K(schema_operation), K(ret));
@@ -67,8 +74,8 @@ int ObDDLSqlService::log_operation(
     LOG_WARN("sql_append_hex_escape_str failed", K(ret), K(schema_operation.database_name_));
   } else if (OB_FAIL(sql_append_hex_escape_str(schema_operation.table_name_, hex_table_string))) {
     LOG_WARN("sql_append_hex_escape_str failed", K(ret), K(schema_operation.table_name_));
-  } else if (OB_FAIL(sql_append_hex_escape_str(schema_operation.ddl_stmt_str_, hex_sql_string))) {
-    LOG_WARN("sql_append_hex_escape_str failed", K(schema_operation.ddl_stmt_str_));
+  } else if (OB_FAIL(sql_append_hex_escape_str(ddl_stmt_for_log, hex_sql_string))) {
+    LOG_WARN("sql_append_hex_escape_str failed", K(ddl_stmt_for_log));
   } else {
     exec_tenant_id = tsi_value->exec_tenant_id_;
     ddl_id_str = tsi_value->ddl_id_str_;
@@ -106,7 +113,7 @@ int ObDDLSqlService::log_operation(
   }
 
   if (OB_SUCC(ret)) {
-    if (OB_ISNULL(ddl_id_str) || schema_operation.ddl_stmt_str_.empty()) {
+    if (OB_ISNULL(ddl_id_str) || ddl_stmt_for_log.empty()) {
       // do-nothing, only record ddl_id into __all_ddl_id if ddl_stmt is not empty
     } else {
       int64_t affected_rows = 0;
