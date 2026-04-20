@@ -3058,7 +3058,7 @@ int ObTransService::check_for_standby(const share::ObLSID &ls_id,
                                       SCN &trans_version)
 {
   int ret = OB_SUCCESS;
-  
+
   ret = OB_NOT_SUPPORTED;
 
   TRANS_LOG(ERROR, "2pc standby read is not supported", K(ret), K(tx_id), K(ls_id), K(snapshot));

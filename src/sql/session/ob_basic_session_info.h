@@ -308,7 +308,7 @@ public:
     FORCE_OFF
   };
   // Switching autonomous transactions must switch nested statements, otherwise the context information of statement execution may have changed when switching back to the main transaction, for example:
-  // 
+  //
   // So in principle TransSavedValue should contain all attributes of StmtSavedValue, consider making the former a subclass of the latter,
   // but there are several attributes that exist in both, but the operations to be performed are different, finally decided to extract the common attributes for processing into
   // Public base class BaseSavedValue, convenient for maximum code reuse, when adding new attributes in the future, similar principles should also be referred to determine which class to place them in.
@@ -486,7 +486,6 @@ public:
   uint64_t get_local_auto_increment_offset() const;
   uint64_t get_local_last_insert_id() const;
   void set_local_ob_enable_pl_cache(bool v) { sys_vars_cache_.set_ob_enable_pl_cache(v); }
-  void set_local_ob_enable_plan_cache(bool v) { sys_vars_cache_.set_ob_enable_plan_cache(v); }
   bool get_local_ob_enable_pl_cache() const;
   bool get_local_ob_enable_plan_cache() const;
   bool get_local_ob_enable_sql_audit() const;
@@ -2294,8 +2293,8 @@ private:
         bool inc_runtime_filter_wait_time_ms_:1;
         bool inc_runtime_filter_max_in_num_:1;
         bool inc_runtime_bloom_filter_max_size_:1;
-        bool inc_enable_rich_vector_format_:1; 
-        bool inc_ncharacter_set_connection_:1; 
+        bool inc_enable_rich_vector_format_:1;
+        bool inc_ncharacter_set_connection_:1;
         bool inc_default_lob_inrow_threshold_:1;
         bool inc_ob_enable_pl_cache_:1;
         bool inc_compat_type_:1;
@@ -2555,13 +2554,14 @@ private:
   common::ObSEArray<uint64_t, 4> enable_role_ids_;
   uint64_t sys_var_config_hash_val_;
   char thread_name_[OB_THREAD_NAME_BUF_LEN];
-  bool is_real_inner_session_; 
+  bool is_real_inner_session_;
   // Currently, when inner sql is executed, the session will be created from session_mgr in most cases. We think he is an inner session;
   // In addition, in situations such as PL execution, the external session will be passed to the inner sql Connection. In this case, it is not considered an inner session.
   // There are differences between the two in terms of ASH statistics and so on, so they should be distinguished.
   bool has_ccl_rule_;
   int64_t last_ccl_cnt_update_time_;
 public:
+  bool get_enable_hyperscan_regexp_engine() const;
   int8_t get_min_const_integer_precision() const;
 };
 

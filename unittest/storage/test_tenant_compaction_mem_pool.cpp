@@ -16,7 +16,7 @@
 
 /*
  * test_tenant_compaction_mem_pool.cpp
- * Author: 
+ * Author:
  */
 
 #include <gmock/gmock.h>

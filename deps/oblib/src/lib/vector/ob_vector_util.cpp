@@ -46,7 +46,7 @@ void ObVsagLogger::Info(const std::string& msg)
 }
 
 void ObVsagLogger::Warn(const std::string& msg)
-{   
+{
     ObString Log = ObString(msg.size(), msg.c_str());
     LOG_WARN_RET(OB_ERR_VSAG_RETURN_ERROR, "[Vsag]",K(Log));
 }
@@ -80,7 +80,7 @@ int init_vasg_logger(void* logger)
 
 
 bool check_vsag_init()
-{  
+{
     INIT_SUCC(ret);
 #ifdef OB_BUILD_CDC_DISABLE_VSAG
     return true;
@@ -100,7 +100,7 @@ int create_index(obvsag::VectorIndexPtr& index_handler, int index_type,
   INIT_SUCC(ret);
 #ifdef OB_BUILD_CDC_DISABLE_VSAG
   return ret;
-#else 
+#else
   obvsag::set_block_size_limit(2*1024*1024);
   LOG_INFO("vector index create params: ", K(index_type), K(dim), KCSTRING(dtype), KCSTRING(metric), K(max_degree), K(ef_construction), K(ef_search),
       KP(allocator), K(extra_info_size), K(refine_type), K(bq_bits_query), K(bq_use_fht));
@@ -235,9 +235,9 @@ int get_vid_bound(obvsag::VectorIndexPtr index_handler, int64_t &min_vid, int64_
 #endif
 }
 
-int get_extra_info_by_ids(obvsag::VectorIndexPtr& index_handler, 
-                          const int64_t* ids, 
-                          int64_t count, 
+int get_extra_info_by_ids(obvsag::VectorIndexPtr& index_handler,
+                          const int64_t* ids,
+                          int64_t count,
                           char *extra_infos) {
 INIT_SUCC(ret);
 #ifdef OB_BUILD_CDC_DISABLE_VSAG
@@ -258,8 +258,8 @@ int knn_search(obvsag::VectorIndexPtr index_handler, float* query_vector,int dim
   return ret;
 #else
   return obvsag::knn_search(index_handler, query_vector, dim, topk,
-                                  result_dist, result_ids, result_size, 
-                                  ef_search, need_extra_info, extra_info, 
+                                  result_dist, result_ids, result_size,
+                                  ef_search, need_extra_info, extra_info,
                                   invalid, reverse_filter, is_extra_info_filter,
                                   allocator, valid_ratio, distance_threshold);
 #endif
@@ -275,8 +275,8 @@ int knn_search(obvsag::VectorIndexPtr index_handler, float* query_vector,int dim
   return ret;
 #else
   return obvsag::knn_search(index_handler, query_vector, dim, topk,
-                                result_dist, result_ids, result_size, 
-                                ef_search, need_extra_info, extra_info, 
+                                result_dist, result_ids, result_size,
+                                ef_search, need_extra_info, extra_info,
                                 invalid, reverse_filter, is_extra_info_filter,
                                 valid_ratio, iter_ctx, is_last_search, allocator);
 #endif

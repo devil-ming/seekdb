@@ -1,7 +1,7 @@
 
 # SeekDB C API -- platform-independent (Android, iOS, Go, etc.)
 # Compiles ob_embed_impl.cpp with SEEKDB_NO_PYTHON to strip pybind11 dependencies.
-if(BUILD_EMBED_MODE)
+if(BUILD_EMBED_MODE OR CMAKE_SYSTEM_NAME STREQUAL "Android")
   add_library(seekdb_embed_c SHARED c/seekdb_embed.cpp python/ob_embed_impl.cpp)
   target_compile_definitions(seekdb_embed_c PRIVATE SEEKDB_NO_PYTHON)
   target_include_directories(seekdb_embed_c INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/c)
@@ -148,13 +148,13 @@ if(BUILD_EMBED_MODE)
 
   message(STATUS "Building embed module with Python ${Python3_EXECUTABLE}")
   execute_process(
-      COMMAND "${Python3_EXECUTABLE}" -c 
+      COMMAND "${Python3_EXECUTABLE}" -c
               "import pybind11; print(pybind11.get_cmake_dir())"
       OUTPUT_VARIABLE pybind11_CMAKE_DIR
       OUTPUT_STRIP_TRAILING_WHITESPACE
       RESULT_VARIABLE result
   )
-  
+
   if(NOT result EQUAL 0)
       message(STATUS "pybind11 not found, attempting to install automatically...")
       execute_process(
@@ -169,7 +169,7 @@ if(BUILD_EMBED_MODE)
       else()
           message(STATUS "Successfully installed pybind11")
           execute_process(
-              COMMAND "${Python3_EXECUTABLE}" -c 
+              COMMAND "${Python3_EXECUTABLE}" -c
                       "import pybind11; print(pybind11.get_cmake_dir())"
               OUTPUT_VARIABLE pybind11_CMAKE_DIR
               OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -184,7 +184,7 @@ if(BUILD_EMBED_MODE)
   set(pybind11_DIR ${pybind11_CMAKE_DIR})
   find_package(pybind11 CONFIG REQUIRED)
   message(STATUS "pybind11 version: ${pybind11_VERSION}")
-  
+
   set(libname "libseekdb_python")
   pybind11_add_module(${libname} NO_EXTRAS python/ob_embed_impl.cpp)
 

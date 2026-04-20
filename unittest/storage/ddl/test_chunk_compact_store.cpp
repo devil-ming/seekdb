@@ -18,8 +18,6 @@
 
 #define ASSERT_OK(x) ASSERT_EQ(OB_SUCCESS, (x))
 
-#include <chrono>
-
 #define private public
 #define protected public
 #include "storage/blocksstable/ob_row_generate.h"
@@ -88,7 +86,7 @@ int ObStoredRowGenerate::get_stored_row(StoredRow **&sr)
           MEMCPY((void*)&datum_ptr->ptr_, &data_ptr, 8);
           *data_ptr = 1;
         } else {
-          // wont't go here 
+          // wont't go here
           // generate var data
           int64_t datum_offset = sizeof(ObDatum) * j;
           int64_t data_offset = COLUMN_CNT * sizeof(ObDatum) + 8 * j + sizeof(StoredRow);
@@ -166,7 +164,7 @@ public:
   static void SetUpTestCase()
   {
     ASSERT_EQ(OB_SUCCESS, ObTimerService::get_instance().start());
-  } 
+  }
   static void TearDownTestCase()
   {
     ObTimerService::get_instance().stop();
@@ -217,8 +215,8 @@ void TestCompactChunk::SetUp()
 
   EXPECT_EQ(OB_SUCCESS, init_tenant_mgr());
   ASSERT_EQ(OB_SUCCESS, common::ObClockGenerator::init());
-  ASSERT_EQ(OB_SUCCESS, tmp_file::ObTmpBlockCache::get_instance().init("tmp_block_cache"));
-  ASSERT_EQ(OB_SUCCESS, tmp_file::ObTmpPageCache::get_instance().init("sn_tmp_page_cache"));
+  ASSERT_EQ(OB_SUCCESS, tmp_file::ObTmpBlockCache::get_instance().init("tmp_block_cache", 1));
+  ASSERT_EQ(OB_SUCCESS, tmp_file::ObTmpPageCache::get_instance().init("sn_tmp_page_cache", 1));
   ASSERT_EQ(OB_SUCCESS, ObTimerService::get_instance().start());
 
   static ObTenantBase tenant_ctx(OB_SYS_TENANT_ID);
@@ -277,10 +275,10 @@ TEST_F(TestCompactChunk, test_read_writer_compact)
     }
   }
   cs_chunk.set_meta(&row_meta);
-  
-  
+
+
   StoredRow **sr;
-  ret = row_generate_.get_stored_row(sr); 
+  ret = row_generate_.get_stored_row(sr);
   ASSERT_EQ(ret, OB_SUCCESS);
 
   char *buf = reinterpret_cast<char*>(sr);
@@ -333,7 +331,7 @@ TEST_F(TestCompactChunk, test_read_writer_compact_vardata)
     }
   }
   cs_chunk.set_meta(&row_meta);
-  
+
   StoredRow **sr;
   ret = row_generate_.get_stored_row(sr);
   ASSERT_EQ(ret, OB_SUCCESS);

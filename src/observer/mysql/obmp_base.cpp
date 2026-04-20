@@ -446,7 +446,7 @@ int ObMPBase::check_and_refresh_schema(uint64_t login_tenant_id,
 
   if (login_tenant_id != effective_tenant_id) {
     // do nothing
-    // 
+    //
   } else if (OB_ISNULL(gctx_.schema_service_)) {
     ret = OB_INVALID_ARGUMENT;
     LOG_WARN("null schema service", K(ret), K(gctx_));
@@ -495,11 +495,11 @@ int ObMPBase::response_row(ObSQLSessionInfo &session,
   if (OB_ISNULL(fields) || row.get_count() != fields->count()) {
     ret = OB_INVALID_ARGUMENT;
     LOG_WARN("fields is null", K(ret), KP(fields));
-  } else if (OB_FAIL(ob_write_row(allocator, row, tmp_row))) { 
+  } else if (OB_FAIL(ob_write_row(allocator, row, tmp_row))) {
     LOG_WARN("deep copy row fail.", K(ret));
   } else {
     for (int64_t i = 0; OB_SUCC(ret) && i < tmp_row.get_count(); ++i) {
-      ObObj &value = tmp_row.get_cell(i); 
+      ObObj &value = tmp_row.get_cell(i);
       ObCharsetType charset_type = CHARSET_INVALID;
       ObCharsetType ncharset_type = CHARSET_INVALID;
       // need at ps mode
@@ -542,14 +542,14 @@ int ObMPBase::response_row(ObSQLSessionInfo &session,
                                     exec_ctx))) {
           LOG_WARN("convert lob locator to longtext failed", K(ret));
         } else if ((value.is_collection_sql_type() || value.is_geometry())
-                   && OB_FAIL(ObXMLExprHelper::process_sql_udt_results(value, 
+                   && OB_FAIL(ObXMLExprHelper::process_sql_udt_results(value,
                                     &allocator,
                                     &session,
                                     exec_ctx,
                                     is_ps_protocol,
                                     fields,
                                     schema_guard))) {
-          LOG_WARN("convert udt to client format failed", K(ret), K(value.get_udt_subschema_id()));      
+          LOG_WARN("convert udt to client format failed", K(ret), K(value.get_udt_subschema_id()));
         }
       }
     }

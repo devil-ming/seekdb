@@ -167,7 +167,7 @@ ObSqlCtx::ObSqlCtx()
     ccl_rule_id_(0),
     ccl_match_time_(0),
     reroute_info_(nullptr)
-    
+
 {
   sql_id_[0] = '\0';
   sql_id_[common::OB_MAX_SQL_ID_LENGTH] = '\0';
@@ -916,7 +916,7 @@ int ObQueryCtx::add_local_session_vars(ObIAllocator *alloc, const ObLocalSession
   return ret;
 }
 
-int ObQueryCtx::get_local_session_vars(const int64_t idx, const ObLocalSessionVar *&local_session_var) const 
+int ObQueryCtx::get_local_session_vars(const int64_t idx, const ObLocalSessionVar *&local_session_var) const
 {
   int ret = OB_SUCCESS;
   if (OB_UNLIKELY(idx < 0 || idx >= all_local_session_vars_.count())) {

@@ -36,7 +36,7 @@ using namespace common;
 namespace palf
 {
 // ========================= LogIODeviceWrapper=====================
-int LogIODeviceWrapper::init(const char *clog_dir, 
+int LogIODeviceWrapper::init(const char *clog_dir,
                              const int64_t disk_io_thread_count,
                              const int64_t max_io_depth,
                              ObIOManager *io_manager,
@@ -46,7 +46,7 @@ int LogIODeviceWrapper::init(const char *clog_dir,
   if (OB_ISNULL(clog_dir) || 0 >= disk_io_thread_count || 0 >= max_io_depth ||
       OB_ISNULL(io_manager) || OB_ISNULL(device_manager)) {
     ret = OB_INVALID_ARGUMENT;
-    PALF_LOG(WARN, "invalid argument", K(ret), KP(clog_dir), K(disk_io_thread_count), 
+    PALF_LOG(WARN, "invalid argument", K(ret), KP(clog_dir), K(disk_io_thread_count),
              K(max_io_depth), KP(io_manager), KP(device_manager));
   } else {
     const ObString storage_type_prefix(OB_LOCAL_PREFIX);
@@ -97,7 +97,7 @@ share::ObLocalDevice *LogIODeviceWrapper::get_local_device()
   return log_local_device_;
 }
 // ========================= LogIOAdapter=====================
-int LogIOAdapter::init(const int64_t tenant_id, 
+int LogIOAdapter::init(const int64_t tenant_id,
                        common::ObIODevice *log_local_device,
                        ObResourceManager *resource_manager,
                        ObIOManager *io_manager)
@@ -126,8 +126,8 @@ void LogIOAdapter::destroy()
   is_inited_ = false;
 }
 
-int LogIOAdapter::open(const char *block_path, 
-                       const int flags, 
+int LogIOAdapter::open(const char *block_path,
+                       const int flags,
                        const mode_t mode,
                        ObIOFd &io_fd)
 {
@@ -170,9 +170,9 @@ int LogIOAdapter::close(ObIOFd &io_fd)
   return ret;
 }
 
-int LogIOAdapter::pwrite(const ObIOFd &io_fd, 
-                         const char *buf, 
-                         const int64_t count, 
+int LogIOAdapter::pwrite(const ObIOFd &io_fd,
+                         const char *buf,
+                         const int64_t count,
                          const int64_t offset,
                          int64_t &write_size)
 {
@@ -212,10 +212,10 @@ int LogIOAdapter::pwrite(const ObIOFd &io_fd,
   return ret;
 }
 
-int LogIOAdapter::pread(const ObIOFd &io_fd, 
-                        const int64_t count, 
+int LogIOAdapter::pread(const ObIOFd &io_fd,
+                        const int64_t count,
                         const int64_t offset,
-                        char *buf, 
+                        char *buf,
                         int64_t &out_read_size,
                         LogIOContext &io_ctx)
 {
@@ -231,7 +231,7 @@ int LogIOAdapter::pread(const ObIOFd &io_fd,
     PALF_LOG(WARN, "invalid argument", K(io_fd), KP(buf), K(count), K(offset));
   } else {
     CONSUMER_GROUP_FUNC_GUARD(io_ctx.get_function_type());
-    
+
     ObIOInfo io_info;
     io_info.tenant_id_ = tenant_id_;
     io_info.fd_ = io_fd;
@@ -258,10 +258,10 @@ int LogIOAdapter::pread(const ObIOFd &io_fd,
   return ret;
 }
 
-int LogIOAdapter::pread(const ObIOFd &io_fd, 
-                        const int64_t count, 
+int LogIOAdapter::pread(const ObIOFd &io_fd,
+                        const int64_t count,
                         const int64_t offset,
-                        char *buf, 
+                        char *buf,
                         int64_t &out_read_size)
 {
   int ret = OB_SUCCESS;
@@ -279,7 +279,7 @@ int LogIOAdapter::pread(const ObIOFd &io_fd,
     PALF_LOG(TRACE, "obpread successfully", K(offset), K(count), K(out_read_size), K(io_fd));
   }
   return ret;
-}                                          
+}
 
 int LogIOAdapter::truncate(const ObIOFd &io_fd, const int64_t offset)
 {

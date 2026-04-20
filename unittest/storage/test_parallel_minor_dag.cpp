@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include <gmock/gmock.h>
 #define USING_LOG_PREFIX STORAGE
 

@@ -398,7 +398,7 @@ PCODE_DEF(OB_HA_GET_MIGRATION_CACHE_JOB_INFO, 0x4C2)
 PCODE_DEF(OB_HA_FETCH_MICRO_BLOCK_KEYS, 0x4C3)          // FARM COMPAT WHITELIST, rename, compatibility detection whitelist
 PCODE_DEF(OB_HA_FETCH_MICRO_BLOCK, 0x4C4)
 
-// fetch macro block logic id array 
+// fetch macro block logic id array
 // PCODE_DEF(OB_HA_FETCH_SSTABLE_MACRO_ID_INFO, 0x4C8)  // FARM COMPAT WHITELIST, rename, compatibility detection whitelist
 
 // sql, including executor

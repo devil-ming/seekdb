@@ -724,7 +724,7 @@ int ObTableLoadService::remove_ctx(ObTableLoadTableCtx *table_ctx)
           LOG_WARN("fail to recycle_memory", KR(tmp_ret), K(release_arg.task_key_));
         }
         table_ctx->reset_assigned_memory();
-      } 
+      }
       if (table_ctx->is_assigned_resource()) {
         if (OB_TMP_FAIL(ObTableLoadService::delete_assigned_task(release_arg))) {
           LOG_WARN("fail to delete assigned task", KR(tmp_ret), K(release_arg));

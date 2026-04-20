@@ -398,7 +398,7 @@ struct ObSockFdParam
   {}
 
   int64_t  session_id_;
-  void*    m_addr_info_; 
+  void*    m_addr_info_;
   int32_t  tx_timeout_;
   ObCollationType collation_;
 
@@ -407,7 +407,7 @@ struct ObSockFdParam
 typedef common::hash::ObHashMap<int64_t, ObSockFdParam, common::hash::NoPthreadDefendMode> ObSockFdMap;
 struct ObDBlinkSequenceIdKey{
   ObDBlinkSequenceIdKey()
-  :dblink_id_(OB_INVALID_ID) 
+  :dblink_id_(OB_INVALID_ID)
   {}
   ObDBlinkSequenceIdKey(const common::ObString &name, uint64_t dblink_id)
   :sequence_name_(name),dblink_id_(dblink_id)
@@ -894,8 +894,8 @@ public:
   void set_accessed_session_level_temp_table() { has_accessed_session_level_temp_table_ = true; }
   bool has_accessed_session_level_temp_table() const { return has_accessed_session_level_temp_table_; }
   // Clear temporary table
-  int drop_temp_tables(const bool is_sess_disconn = true, 
-                       const bool is_xa_trans = false, 
+  int drop_temp_tables(const bool is_sess_disconn = true,
+                       const bool is_xa_trans = false,
                        const bool is_reset_connection = false);
   void refresh_temp_tables_sess_active_time(); // update temporary table's sess active time
 
@@ -1230,7 +1230,7 @@ public:
   int get_inner_ps_stmt_id(ObPsStmtId cli_stmt_id, ObPsStmtId &inner_stmt_id);
   int close_ps_stmt(ObPsStmtId stmt_id);
   void reset_ps_session_info() { ps_session_info_map_.reuse(); }
-  void reset_ps_name() 
+  void reset_ps_name()
   {
     ps_name_id_map_.reuse();
     next_client_ps_stmt_id_ = 0;
@@ -1406,7 +1406,7 @@ public:
     conf.enable_adaptive_plan_cache_ = cached_tenant_config_info_.enable_plan_cache_adaptive();
     conf.pc_adaptive_effectiveness_ratio_threshold_ =
       cached_tenant_config_info_.get_pc_adaptive_effectiveness_ratio_threshold();
-    conf.pc_adaptive_min_exec_time_threshold_ = 
+    conf.pc_adaptive_min_exec_time_threshold_ =
       cached_tenant_config_info_.get_pc_adaptive_min_exec_time_threshold();
     return conf;
   }
@@ -1471,7 +1471,7 @@ public:
   bool has_ccl_rule() const { return has_ccl_rule_; }
   int check_service_name_and_failover_mode() const;
   int check_service_name_and_failover_mode(const uint64_t tenant_id) const;
-  int64_t get_tx_id_with_thread_data_lock() { 
+  int64_t get_tx_id_with_thread_data_lock() {
     ObSQLSessionInfo::LockGuard guard(get_thread_data_lock());
     return tx_desc_ != NULL ? tx_desc_->get_tx_id().get_id() : transaction::ObTransID().get_id();
   }
@@ -1742,7 +1742,7 @@ private:
   //in order to access exec ctx through session during SQL execution
   ObExecContext *cur_exec_ctx_;
   bool restore_auto_commit_; // for dblink xa transaction to restore the value of auto_commit
-  int64_t sql_req_level_; // for sql request between cluster avoid dead lock, such as dblink dead lock 
+  int64_t sql_req_level_; // for sql request between cluster avoid dead lock, such as dblink dead lock
   int64_t expect_group_id_;
   // When try packet retry failed, set this flag true and retry at current thread.
   // This situation is unexpected and will report a warning to user.

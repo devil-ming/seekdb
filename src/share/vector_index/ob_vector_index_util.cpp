@@ -5176,7 +5176,7 @@ int ObVectorIndexUtil::get_dropping_vec_index_invisiable_table_schema(
           }
         } else if (share::schema::is_vec_index_id_type(info.index_type_)) {
           // Get table 4 by index name
-          if (!check_is_match_index_type(index_table_schema.get_index_type(), info.index_type_)) { // skip getting diff index type 
+          if (!check_is_match_index_type(index_table_schema.get_index_type(), info.index_type_)) { // skip getting diff index type
           } else if (already_get_index_id_table) {
           // The main table may contain multiple table 4s, but here we only take the table 4 that satisfies the index_name string,
           // If we do not check if it has already been obtained, then during the loop, it will fetch the same index_schema from the main table multiple times, which does not meet the expectation. Here, we need to skip.
@@ -5199,7 +5199,7 @@ int ObVectorIndexUtil::get_dropping_vec_index_invisiable_table_schema(
           }
         } else if (share::schema::is_vec_index_snapshot_data_type(info.index_type_)) {
           // Get table 5 by index name
-          if (!check_is_match_index_type(index_table_schema.get_index_type(), info.index_type_)) { // skip getting diff index type 
+          if (!check_is_match_index_type(index_table_schema.get_index_type(), info.index_type_)) { // skip getting diff index type
           } else if (already_get_snapshot_data_table) {   // skip
           } else if (OB_FAIL(ObVecIndexBuilderUtil::get_vec_table_schema_by_name(schema_guard,
                                                                                  tenant_id,
@@ -6397,7 +6397,7 @@ int ObVecExtraInfoObj::from_vector(
   return ret;
 }
 
-int ObVectorIndexUtil::set_vector_index_param(const ObTableSchema *&vec_index_schema, 
+int ObVectorIndexUtil::set_vector_index_param(const ObTableSchema *&vec_index_schema,
                                               ObVecIdxExtraInfo &vec_extra_info,
                                               double &selectivity,
                                               sql::ObRawExpr *&vector_expr,

@@ -17,9 +17,9 @@
 /**
  * ObOccamTimer follows the Occam's razor principle and value semantics.
  * It only requires the minimum necessary information, and then things will be done.
- * 
- * Occam’s razor, also spelled Ockham’s razor, also called law of economy or law of parsimony, 
- * principle stated by the Scholastic philosopher William of Ockham (1285–1347/49) that 
+ *
+ * Occam’s razor, also spelled Ockham’s razor, also called law of economy or law of parsimony,
+ * principle stated by the Scholastic philosopher William of Ockham (1285–1347/49) that
  * “plurality should not be posited without necessity.”
  * The principle gives precedence to simplicity: of two competing theories,
  * the simpler explanation of an entity is to be preferred.
@@ -114,7 +114,7 @@ class ObOccamTimerTask : public ObTimeWheelTask
     ObWeakGuard<ObFunction<bool()>> function_;// the enclosed package to run
     ObOccamTimerTask *p_task_;// 1. to add lock(sync with schedule thread and execute thread) 2. free this ptr if one-shot task
     const bool need_delete_;// one-shot task need free it's memory when executed done
-    const int64_t schedule_time_;// for detect if execute time far away from schedule time 
+    const int64_t schedule_time_;// for detect if execute time far away from schedule time
   };
 public:
   ObOccamTimerTask(occam::TASK_PRIORITY task_priority,
@@ -868,7 +868,7 @@ private:
         if (CLICK_FAIL(task_scop_guard->init())) {
           OCCAM_LOG(ERROR, "init task failed", K(ret));
         } else if (CLICK_FAIL(task_scop_guard->func_shared_ptr_->assign(std::forward<F>(func)))) {
-          OCCAM_LOG(ERROR, "assign function to shared ptr failed", K(ret)); 
+          OCCAM_LOG(ERROR, "assign function to shared ptr failed", K(ret));
         } else {
           if (immediately) {
             task_scop_guard->expected_run_ts_us_ = ObClockGenerator::getRealClock();

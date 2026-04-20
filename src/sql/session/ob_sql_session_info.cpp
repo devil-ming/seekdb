@@ -631,7 +631,7 @@ void ObSQLSessionInfo::destroy(bool skip_sys_var)
   if (is_inited_) {
     int ret = OB_SUCCESS;
     // The deserialized session should not do end_trans etc cleanup work
-    // bug: 
+    // bug:
     if (false == get_is_deserialized()) {
       if (false == ObSchemaService::g_liboblog_mode_) {
         // session disconnects, call ObTransService::end_trans to roll back the transaction,
@@ -1318,7 +1318,7 @@ ObDbmsCursorInfo *ObSQLSessionInfo::get_dbms_cursor(int64_t cursor_id)
   ObDbmsCursorInfo *dbms_cursor = NULL;
   OV (OB_NOT_NULL(cursor = get_cursor(cursor_id)),
       OB_INVALID_ARGUMENT, cursor_id);
-  OV (cursor->is_dbms_sql_cursor(), 
+  OV (cursor->is_dbms_sql_cursor(),
       OB_INVALID_ARGUMENT, cursor_id);
   OV (OB_NOT_NULL(dbms_cursor = dynamic_cast<ObDbmsCursorInfo *>(cursor)),
       OB_INVALID_ARGUMENT, cursor_id);
@@ -2111,7 +2111,7 @@ int ObSQLSessionInfo::set_package_variable(
     OZ (package_guard.init());
     if (OB_SUCC(ret)) {
       bool is_invalid = false;
-      
+
       if (key.prefix_match(pl::package_key_prefix_v2)) {
         bool is_oversize_value = false;
         OZ (name.decode_key(allocator, key));
@@ -2633,7 +2633,7 @@ static int write_str_reuse_buf(AllocatorT &allocator, const ObString &src, ObStr
     allocator.free(dst.ptr());
     if (OB_ISNULL(src.ptr()) || OB_UNLIKELY(0 >= src_len)) {
       dst.assign(NULL, 0);
-    } else if (NULL == 
+    } else if (NULL ==
                 (ptr = static_cast<char *>(allocator.alloc(src_len)))) {
       dst.assign(NULL, 0);
       ret = OB_ALLOCATE_MEMORY_FAILED;

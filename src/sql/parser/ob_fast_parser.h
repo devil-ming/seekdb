@@ -278,7 +278,7 @@ protected:
 			}																																						 \
 		}																																							 \
 		return bool_ret;																															 \
-	}       
+	}
 	#define DEF_CHARACTER_CHECK_FUNCS(CHARACTER_NAME, SPECIFY_CHARACTER)			       \
 	inline bool is_##CHARACTER_NAME(char ch)																	   		 \
 	{																																						     \
@@ -454,7 +454,7 @@ protected:
 		return is_valid_char(ch) &&
 		static_cast<uint8_t>(ch) >= 0x40 && static_cast<uint8_t>(ch) <= 0xfe;
 	}
-	
+
 	// [\x81-\xfe]
 	inline bool is_hk2(char ch)
 	{
@@ -464,7 +464,7 @@ protected:
 	}
 
 	inline bool notascii(char ch)
-	{	
+	{
 		return 	is_valid_char(ch) &&
 				(static_cast<uint8_t>(ch) >= 0x80 && static_cast<uint8_t>(ch) <= 0xFF);
 	}
@@ -664,7 +664,7 @@ private:
 	ObSQLMode sql_mode_;
 	int parse_next_token();
 	int process_identifier(bool is_number_begin);
-	/** 
+	/**
 	 * In case of two adjacent string literal, such as " 'a' 'b' ", the two string will be
 	 * concatenate into 'ab'. However, the string 'a' will used as the column name if it appears
 	 * in the select list, which means we must save it rather than just skipping the 'sqnewline'.

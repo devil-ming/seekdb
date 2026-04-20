@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 
 #define USING_LOG_PREFIX SERVER
 
@@ -162,7 +162,7 @@ int ObSessInfoVerify::verify_session_info(sql::ObSQLSessionInfo &sess,
     LOG_TRACE("verify version not consistent, no need self-verification", K(sess.get_server_sid()),
           K(sess.get_proxy_sessid()), K(GET_MIN_CLUSTER_VERSION()), K(CLUSTER_CURRENT_VERSION));
   }
-  
+
   return ret;
 }
 

@@ -306,7 +306,7 @@ void ObIOFlag::set_sys_module_id(const uint64_t sys_module_id)
 
 bool ObIOFlag::is_sys_module() const
 {
-  return USER_RESOURCE_OTHER_GROUP_ID == group_id_ 
+  return USER_RESOURCE_OTHER_GROUP_ID == group_id_
           && sys_module_id_ >= SYS_MODULE_START_ID
           && sys_module_id_ < SYS_MODULE_END_ID;
 }
@@ -929,7 +929,7 @@ void ObIOResult::finish(const ObIORetCode &ret_code, ObIORequest *req)
         if (!req->fd_.is_backup_block_file()) {
           // record io error
           if (OB_UNLIKELY(OB_IO_ERROR == ret_code_.io_ret_)) {
-            OB_IO_MANAGER.get_device_health_detector().record_io_error(*this, *req); 
+            OB_IO_MANAGER.get_device_health_detector().record_io_error(*this, *req);
           }
           // record timeout
           if (OB_UNLIKELY(ObTimeUtility::current_time() > req->timeout_ts())) {
@@ -1155,7 +1155,7 @@ void ObIORequest::reset() //only for test, not dec resut_ref
     fd_.device_handle_->free_iocb(control_block_);
     control_block_ = nullptr;
   }
-  
+
   tenant_id_ = 0;
   free_io_buffer();
   ref_cnt_ = 0;
@@ -1326,7 +1326,7 @@ ObIOMode ObIORequest::get_mode() const
 
 ObIOGroupMode ObIORequest::get_group_mode() const
 {
-  ObIOGroupMode group_mode = ObIOGroupMode::MODECNT; 
+  ObIOGroupMode group_mode = ObIOGroupMode::MODECNT;
   if (fd_.device_handle_->is_object_device()) {
     if (get_mode() == ObIOMode::READ) {
       group_mode = ObIOGroupMode::REMOTEREAD;
@@ -1597,7 +1597,7 @@ int64_t ObIORequest::get_remained_io_timeout_us()
 {
   int64_t cur_remained_timeout_us = 0;
   if (OB_NOT_NULL(io_result_)) {
-    cur_remained_timeout_us = io_result_->timeout_us_ 
+    cur_remained_timeout_us = io_result_->timeout_us_
                             - (ObTimeUtility::current_time() - io_result_->time_log_.begin_ts_);
   }
   return MAX(0, cur_remained_timeout_us);
@@ -2028,9 +2028,9 @@ bool ObTenantIOConfig::ParamConfig::is_valid() const
 }
 
 ObTenantIOConfig::ObTenantIOConfig()
-  : unit_config_(), 
+  : unit_config_(),
     group_configs_(),
-    group_config_change_(false), 
+    group_config_change_(false),
     param_config_()
 {
   int ret = OB_SUCCESS;
@@ -2053,7 +2053,7 @@ ObTenantIOConfig::~ObTenantIOConfig()
   destroy();
 }
 
-void ObTenantIOConfig::destroy() 
+void ObTenantIOConfig::destroy()
 {
   group_configs_.destroy();
 }
@@ -2195,7 +2195,7 @@ int ObTenantIOConfig::add_single_group_config(const uint64_t tenant_id,
   if (OB_UNLIKELY(!is_resource_manager_group(key.group_id_)) || !is_valid_tenant_id(tenant_id) ||
       min_percent < 0 || min_percent > 100 ||
       max_percent < 0 || max_percent > 100 ||
-      weight_percent < 0 || weight_percent > 100 || 
+      weight_percent < 0 || weight_percent > 100 ||
       min_percent > max_percent) {
     ret = OB_INVALID_CONFIG;
     LOG_WARN("invalid group config", K(ret), K(tenant_id), K(key.group_id_), K(min_percent), K(max_percent), K(weight_percent));
@@ -2283,7 +2283,3 @@ int64_t ObTenantIOConfig::to_string(char* buf, const int64_t buf_len) const
   J_OBJ_END();
   return pos;
 }
-
-
-
-

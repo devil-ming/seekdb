@@ -955,7 +955,7 @@ int ObRootService::execute_bootstrap()
       LOG_WARN("fail to get baseline schema version", KR(ret));
     } else if (OB_FAIL(set_config_after_bootstrap_())) {
       LOG_WARN("failed to set config for bootstrap", KR(ret));
-    } 
+    }
     if (OB_SUCC(ret)) {
       LOG_DBA_INFO_V2(OB_BOOTSTRAP_WAIT_SYS_PACKAGE_BEGIN,
                       DBA_STEP_INC_INFO(bootstrap),
@@ -5599,7 +5599,7 @@ int ObRootService::flush_opt_stat_monitoring_info(const obrpc::ObFlushOptStatArg
 
 int ObRootService::admin_set_backup_config(const obrpc::ObAdminSetConfigArg &arg)
 {
-  int ret = OB_SUCCESS;  
+  int ret = OB_SUCCESS;
   if (!arg.is_valid()) {
     ret = OB_ERR_UNEXPECTED;
     LOG_WARN("invalid backup config arg", K(ret));

@@ -219,7 +219,8 @@ int ObTimerService::start()
     } else if (OB_FAIL(worker_thread_pool_.init(
         MIN_WORKER_THREAD_NUM, TASK_NUM_LIMIT, "TimerWK", tenant_id_))) {
       OB_LOG(WARN, "init ObTimerTaskThreadPool failed", K_(tenant_id), K(ret));
-    } else if (OB_FAIL(worker_thread_pool_.set_thread_count(MAX_WORKER_THREAD_NUM))) {
+    } else if (OB_FAIL(worker_thread_pool_.set_adaptive_thread(
+        MIN_WORKER_THREAD_NUM, MAX_WORKER_THREAD_NUM))) {
       OB_LOG(WARN, "set adaptive thread failed", K_(tenant_id), K(ret));
     } else if (OB_FAIL(ThreadPool::start())) {
       OB_LOG(WARN, "failed to start ObTimerService thread", K(ret));
@@ -662,7 +663,7 @@ bool ObTimerService::find_task_in_set(
 
 void ObTimerService::check_clock()
 {
-  // clock safty check. @see 
+  // clock safty check. @see
   const int64_t rt1 = ObTimeUtility::current_time();
   const int64_t rt2 = ObTimeUtility::current_time_coarse();
   const int64_t delta = rt1 > rt2 ? (rt1 - rt2) : (rt2 - rt1);

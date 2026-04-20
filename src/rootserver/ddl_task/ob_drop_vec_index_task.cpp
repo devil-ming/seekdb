@@ -564,16 +564,16 @@ int ObDropVecIndexTask::check_switch_succ()
     LOG_WARN("refresh schema version failed", K(ret));
   } else if (OB_FAIL(GCTX.schema_service_->get_tenant_schema_guard(tenant_id_, schema_guard))) {
     LOG_WARN("fail to get tenant schema", K(ret), K(tenant_id_));
-  } else if (domain_index_.is_valid() 
+  } else if (domain_index_.is_valid()
           && OB_FAIL(schema_guard.check_table_exist(tenant_id_, domain_index_.table_id_, is_domain_index_exist))) {
     LOG_WARN("fail to check table exist", K(ret), K(tenant_id_), K(domain_index_));
   } else if (vid_rowkey_.is_valid()
           && OB_FAIL(schema_guard.check_table_exist(tenant_id_, vid_rowkey_.table_id_, is_vid_rowkey_exist))) {
     LOG_WARN("fail to check table exist", K(ret), K(tenant_id_), K(vid_rowkey_));
-  } else if (rowkey_vid_.is_valid() 
+  } else if (rowkey_vid_.is_valid()
           && OB_FAIL(schema_guard.check_table_exist(tenant_id_, rowkey_vid_.table_id_, is_rowkey_vid_exist))) {
     LOG_WARN("fail to check table exist", K(ret), K(tenant_id_), K(rowkey_vid_));
-  } else if (vec_index_id_.is_valid() 
+  } else if (vec_index_id_.is_valid()
           && OB_FAIL(schema_guard.check_table_exist(tenant_id_, vec_index_id_.table_id_, is_index_id_exist))) {
     LOG_WARN("fail to check table exist", K(ret), K(tenant_id_), K(vec_index_id_));
   } else if (vec_index_snapshot_data_.is_valid()
@@ -590,9 +590,9 @@ int ObDropVecIndexTask::check_switch_succ()
     is_snapshot_data_exist = vec_index_snapshot_data_.is_valid() ? is_snapshot_data_exist : false;
     is_embedded_vec_exist = hybrid_embedded_vec_.is_valid() ? is_embedded_vec_exist : false;
 
-    if (!is_domain_index_exist && 
-        !is_rowkey_vid_exist && 
-        !is_vid_rowkey_exist && 
+    if (!is_domain_index_exist &&
+        !is_rowkey_vid_exist &&
+        !is_vid_rowkey_exist &&
         !is_index_id_exist &&
         !is_snapshot_data_exist &&
         !is_embedded_vec_exist) {
@@ -603,7 +603,7 @@ int ObDropVecIndexTask::check_switch_succ()
 }
 
 /*
-  create drop none share vector index table task and wait task 
+  create drop none share vector index table task and wait task
 */
 int ObDropVecIndexTask::prepare(const share::ObDDLTaskStatus &new_status)
 {
@@ -922,7 +922,7 @@ int ObDropVecIndexTask::check_and_cancel_del_dag(bool &all_dag_exit)
     LOG_WARN("not init", K(ret));
   } else if (!vec_index_snapshot_data_.is_valid() || !del_lob_meta_row_task_submitted_) {
     all_dag_exit = true;
-  } else if (OB_FAIL(ObDDLUtil::check_and_cancel_single_replica_dag(this, vec_index_snapshot_data_.table_id_, 
+  } else if (OB_FAIL(ObDDLUtil::check_and_cancel_single_replica_dag(this, vec_index_snapshot_data_.table_id_,
             vec_index_snapshot_data_.table_id_, check_dag_exit_tablets_map_, data_format_version_, check_dag_exit_retry_cnt_, false/*is_complement_data_dag*/, all_dag_exit))) {
     LOG_WARN("fail to check and cancel delete lob mete row dag", K(ret), K(vec_index_snapshot_data_));
   }
@@ -951,7 +951,7 @@ int ObDropVecIndexTask::finish()
     LOG_WARN("ObDDLRedefinitionTask has not been inited", K(ret));
   } else if (snapshot_version_ > 0 && OB_FAIL(release_snapshot(snapshot_version_))) {
     LOG_WARN("release snapshot failed", K(ret));
-  } 
+  }
 #ifdef ERRSIM
   if (OB_SUCC(ret)) {
     ret = OB_E(common::EventTable::EN_VEC_INDEX_HNSW_RELEASE_SNAPSHOT_ERR) OB_SUCCESS;

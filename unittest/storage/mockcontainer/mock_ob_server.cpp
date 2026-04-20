@@ -20,7 +20,7 @@
 #include "mock_ob_server.h"
 
 #include "share/ob_simple_mem_limit_getter.h"
-#include "share/ob_device_manager.h" 
+#include "share/ob_device_manager.h"
 
 namespace oceanbase
 {
@@ -88,14 +88,14 @@ int MockObServer::init(const char *schema_file,
 
     uint32_t ipv4_net = 0;
     if (OB_FAIL(obsys::ObNetUtil::get_local_addr_ipv4(config_.devname, ipv4_net))) {
-      LOG_ERROR("get ipv4 address by devname failed", "devname", 
+      LOG_ERROR("get ipv4 address by devname failed", "devname",
           config_.devname.get_value(), KR(ret));
     } else {
       int32_t local_ip = ntohl(ipv4_net);
       int32_t local_port = static_cast<int32_t>(config_.rpc_port);
       // initialize self address
       self_addr_.set_ipv4_addr(local_ip, local_port);
-    }  
+    }
   }
   // init env
   if (OB_SUCC(ret)) {
@@ -119,6 +119,12 @@ int MockObServer::init(const char *schema_file,
       env.log_spec_.log_dir_ = logdir;
       env.log_spec_.max_log_file_size_ = ObLogConstants::MAX_LOG_FILE_SIZE;
       env.clog_dir_ = clogdir;
+      env.index_block_cache_priority_ = 10;
+      env.user_block_cache_priority_ = 1;
+      env.user_row_cache_priority_ = 1;
+      env.fuse_row_cache_priority_ = 1;
+      env.bf_cache_priority_ = 1;
+      env.tablet_ls_cache_priority_ = 1;
     }
   }
   // init schema service

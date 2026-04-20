@@ -259,9 +259,9 @@ class ObSchedInfo
 {
 public:
   ObSchedInfo() : sched_info_(NULL), sched_info_len_(0) {}
-  void reset() 
+  void reset()
   {
-    MEMSET(this, 0 , sizeof(*this)); 
+    MEMSET(this, 0 , sizeof(*this));
   }
   inline void assign(char *sched_info, int64_t info_len)
   {
@@ -456,5 +456,3 @@ struct ObAuditRecordData {
 } //namespace sql
 } //namespace oceanbase
 #endif
-
-

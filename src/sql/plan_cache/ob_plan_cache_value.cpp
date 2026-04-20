@@ -795,7 +795,7 @@ int ObPlanCacheValue::resolve_insert_multi_values_param(ObPlanCacheCtx &pc_ctx,
                                        &temp_obj_params))) {
       LOG_WARN("failed to resolve parames", K(ret));
     } else {
-      LOG_DEBUG("print one insert temp_obj_params", 
+      LOG_DEBUG("print one insert temp_obj_params",
           K(temp_obj_params), K(params_num), K(query_num), K(pc_ctx.not_param_info_));
     }
 
@@ -1457,7 +1457,7 @@ int ObPlanCacheValue::get_outline_version(ObSchemaGetterGuard &schema_guard,
             outline_info))) {
       LOG_WARN("failed to get_outline_info", K(tenant_id), K(database_id), K(signature));
     // try format
-    } else if (NULL == outline_info && 
+    } else if (NULL == outline_info &&
               OB_FAIL(schema_guard.get_outline_info_with_signature(tenant_id,
                       database_id,
                       format_signature,
@@ -1529,7 +1529,7 @@ int ObPlanCacheValue::match(ObPlanCacheCtx &pc_ctx,
       } else if (OB_ISNULL(ps_param)) {
         ret = OB_INVALID_ARGUMENT;
         LOG_WARN("invalid argument", K(ps_param));
-      } else if (ps_param->is_pl_extend() || not_param_var_[i].ps_param_.is_pl_extend() 
+      } else if (ps_param->is_pl_extend() || not_param_var_[i].ps_param_.is_pl_extend()
                   || !not_param_var_[i].ps_param_.can_compare(*ps_param)) {
         is_same = false;
         LOG_WARN("can not compare", K(not_param_var_[i].ps_param_), K(*ps_param), K(i));
@@ -1814,7 +1814,7 @@ int ObPlanCacheValue::get_all_dep_schema(ObPlanCacheCtx &pc_ctx,
             || UDT_SCHEMA == stored_schema_objs_.at(i)->schema_type_) {
           tenant_id = get_tenant_id_by_object_id(stored_schema_objs_.at(i)->schema_id_);
         }
-        if (OB_FAIL(ret)) { 
+        if (OB_FAIL(ret)) {
         } else if (OB_FAIL(schema_guard.get_schema_version(pcv_schema->schema_type_,
                                                     tenant_id,
                                                     pcv_schema->schema_id_,

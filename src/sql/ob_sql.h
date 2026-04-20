@@ -341,8 +341,8 @@ private:
                     ObStmt *basic_stmt,
                     ObStmtNeedPrivs &stmt_need_privs);
 
-  int generate_stmt_with_reconstruct_sql(ObDMLStmt* &stmt, 
-                                        ObPlanCacheCtx *pc_ctx, 
+  int generate_stmt_with_reconstruct_sql(ObDMLStmt* &stmt,
+                                        ObPlanCacheCtx *pc_ctx,
                                         ObSqlCtx &context,
                                         ObResultSet &result,
                                         ObPhysicalPlan *phy_plan);

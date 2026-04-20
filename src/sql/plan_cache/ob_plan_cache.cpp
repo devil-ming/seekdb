@@ -2327,7 +2327,7 @@ int ObPlanCache::flush_pl_cache_single_cache_obj(uint64_t db_id, EvictAttr &attr
 
 template int ObPlanCache::flush_pl_cache_single_cache_obj<ObGetPLKVEntryBySchemaIdOp, uint64_t>(uint64_t db_id, uint64_t &schema_id);
 template int ObPlanCache::flush_pl_cache_single_cache_obj<ObGetPLKVEntryByDbIdOp, uint64_t>(uint64_t db_id, uint64_t &schema_id);
-template int ObPlanCache::flush_pl_cache_single_cache_obj<ObGetPLKVEntryBySQLIDOp, common::ObString>(uint64_t db_id, common::ObString &sql_id);                                
+template int ObPlanCache::flush_pl_cache_single_cache_obj<ObGetPLKVEntryBySQLIDOp, common::ObString>(uint64_t db_id, common::ObString &sql_id);
 
 int ObPlanCache::flush_pl_cache()
 {
@@ -2447,4 +2447,3 @@ void ObPlanCacheEliminationTask::run_free_cache_obj_task()
 
 } // end of namespace sql
 } // end of namespace oceanbase
-

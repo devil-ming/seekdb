@@ -26,7 +26,7 @@ namespace oceanbase
 namespace sql
 {
 
-// 
+//
 
 /*
  *      /-->-- FORBIDDEN

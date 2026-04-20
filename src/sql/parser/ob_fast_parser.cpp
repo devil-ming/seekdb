@@ -1186,7 +1186,7 @@ int ObFastParserBase::process_hex_number(bool is_quote)
   char next_ch = raw_sql_.scan();
   if (is_quote) {
     // X'([0-9A-F])*'
-#if defined(__GNUC__) && defined(__x86_64__) 
+#if defined(__GNUC__) && defined(__x86_64__)
     bool is_arch_supported{true};
     process_hex_chars_simd(raw_sql_, is_arch_supported);
     if (!is_arch_supported) {
@@ -1216,7 +1216,7 @@ int ObFastParserBase::process_hex_number(bool is_quote)
     }
   } else {
     // 0X([0-9A-F])+
-#if defined(__GNUC__) && defined(__x86_64__) 
+#if defined(__GNUC__) && defined(__x86_64__)
     bool is_arch_supported{true};
     process_hex_chars_simd(raw_sql_, is_arch_supported);
     if (!is_arch_supported) {
@@ -2022,7 +2022,7 @@ int ObFastParserBase::process_number(bool has_minus)
       } \
     } \
   } while (0)
-  
+
 
   int ret = OB_SUCCESS;
   int64_t num_begin_pos = raw_sql_.cur_pos_;

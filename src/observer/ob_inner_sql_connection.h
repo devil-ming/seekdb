@@ -426,9 +426,9 @@ private:
   /*
    This flag is used by ddl to force this inner sql bypass the local-optimized path, always execute it through rpc
 
-   Why do we need this? 
+   Why do we need this?
    DDL needs to issue an "insert into select" sql to build the single replica, which will deal with user data.
-   However, in the local-optimized path, the sql will be executed using a "fake user tenant session", whose 
+   However, in the local-optimized path, the sql will be executed using a "fake user tenant session", whose
    login_tenant_id is actually sys tenant. This leads to unexpected privilege check result since privilege
    check always uses login_tenant_id due to security. To solve this problem, we add this flag to force all
    "insert into select" inner sqls issued by DDL to use remote execution, where observer will create a real
@@ -442,7 +442,7 @@ private:
 
   // ask the inner sql connection to use external session instead of internal one
   // this enables show session / kill session using sql query command
-  bool use_external_session_; 
+  bool use_external_session_;
   int32_t group_id_;
   //support set user timeout of stream rpc but not depend on internal_sql_execute_timeout
   int64_t user_timeout_;

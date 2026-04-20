@@ -31,12 +31,12 @@ public:
   int load_sql(const std::string file_path, std::vector<std::string> &sql_array);
   int parse(const ObString &sql);
   bool compare_parser_result(
-       const ParseResult &parse_result, 
-       const char *no_param_sql_ptr, 
+       const ParseResult &parse_result,
+       const char *no_param_sql_ptr,
        const int64_t no_param_sql_len,
        ParamList *p_list,
        const int64_t param_num);
-    
+
 private:
   ObArenaAllocator allocator_;
 private:
@@ -77,8 +77,8 @@ int TestFastParser::load_sql(const std::string file_path, std::vector<std::strin
 }
 
 bool TestFastParser::compare_parser_result(
-     const ParseResult &parse_result, 
-     const char *no_param_sql_ptr, 
+     const ParseResult &parse_result,
+     const char *no_param_sql_ptr,
      const int64_t no_param_sql_len,
      ParamList *p_list,
      const int64_t param_num)
@@ -200,7 +200,7 @@ int TestFastParser::parse(const ObString &sql)
   int64_t param_num = 0;
   char *no_param_sql_ptr = NULL;
   int64_t no_param_sql_len = 0;
-  ParamList *p_list = NULL; 
+  ParamList *p_list = NULL;
   FPContext fp_ctx(charsets4parser);
   fp_ctx.enable_batched_multi_stmt_ = false;
   int ret2 = ObFastParser::parse(sql, fp_ctx, allocator_,

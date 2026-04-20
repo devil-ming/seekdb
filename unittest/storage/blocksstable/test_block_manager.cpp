@@ -51,7 +51,7 @@ public:
   static void SetUpTestCase()
   {
     ASSERT_EQ(OB_SUCCESS, ObTimerService::get_instance().start());
-  } 
+  }
   static void TearDownTestCase()
   {
     ObTimerService::get_instance().stop();
@@ -154,8 +154,8 @@ TEST_F(TestBlockManager, test_mark_and_sweep)
   static ObTenantBase tenant_ctx(OB_SYS_TENANT_ID);
   ObTenantEnv::set_tenant(&tenant_ctx);
 
-  ASSERT_EQ(OB_SUCCESS, tmp_file::ObTmpBlockCache::get_instance().init("tmp_block_cache"));
-  ASSERT_EQ(OB_SUCCESS, tmp_file::ObTmpPageCache::get_instance().init("sn_tmp_page_cache"));
+  ASSERT_EQ(OB_SUCCESS, tmp_file::ObTmpBlockCache::get_instance().init("tmp_block_cache", 1));
+  ASSERT_EQ(OB_SUCCESS, tmp_file::ObTmpPageCache::get_instance().init("sn_tmp_page_cache", 1));
 
   tmp_file::ObTenantTmpFileManager *tf_mgr = nullptr;
   EXPECT_EQ(OB_SUCCESS, mtl_new_default(tf_mgr));

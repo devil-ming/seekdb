@@ -421,7 +421,7 @@ private:
   int last_query_retry_err_;
   // this value include local retry & packet retry
   int64_t retry_cnt_;
-  // for fast fail, 
+  // for fast fail,
   int64_t query_switch_leader_retry_timeout_ts_;
   ObQueryRetryAshInfo query_retry_ash_info_;
 private:
@@ -642,7 +642,7 @@ public:
   }
 
   // release dynamic allocated memory
-  // 
+  //
   void clear();
 
 public:
