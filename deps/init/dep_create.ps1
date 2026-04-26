@@ -9,6 +9,7 @@
     After extraction the layout is:
         deps/3rd/vcpkg/x64-windows/   (vcpkg installed packages)
         deps/3rd/openssl/             (OpenSSL)
+        deps/3rd/vsag/                (vsag vector search library)
         deps/3rd/tools/cmake/         (CMake)
         deps/3rd/tools/ninja/         (Ninja)
         deps/3rd/tools/llvm18/        (LLVM 18)
@@ -122,10 +123,10 @@ foreach ($sect in $sections.Keys) {
             Write-Log "  cached"
         } else {
             Write-Log "  downloading from $url ..."
-            # Schannel/CI: use --ssl-no-revoke (avoids curl 35 / revocation offline).
+            # Schannel/CI: use --ssl-no-revoke (avoids curl 35 / revocation offline); retries for flaky links.
             $tmpPath = "$pkgPath.tmp"
             if (Test-Path $tmpPath) { Remove-Item -Force $tmpPath -ErrorAction SilentlyContinue }
-            & curl.exe -L -f -sS --connect-timeout 120 --ssl-no-revoke -o $tmpPath $url
+            & curl.exe -L -f -sS --connect-timeout 120 --ssl-no-revoke --retry 3 --retry-delay 2 -o $tmpPath $url
             if ($LASTEXITCODE -ne 0) {
                 if (Test-Path $tmpPath) { Remove-Item -Force $tmpPath -ErrorAction SilentlyContinue }
                 Write-Err "Failed to download: $url (curl exit $LASTEXITCODE)"
@@ -155,6 +156,7 @@ Write-Log ""
 Write-Log "Layout:"
 Write-Log "  deps/3rd/vcpkg/x64-windows/    vcpkg packages"
 Write-Log "  deps/3rd/openssl/              OpenSSL"
+Write-Log "  deps/3rd/vsag/                 vsag vector search library"
 Write-Log "  deps/3rd/tools/cmake/          CMake"
 Write-Log "  deps/3rd/tools/ninja/          Ninja"
 Write-Log "  deps/3rd/tools/llvm18/         LLVM 18"
