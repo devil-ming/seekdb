@@ -19,9 +19,19 @@
 name: Build libseekdb
 run-name: Build libseekdb for ${{ github.event_name == 'workflow_dispatch' && inputs.ref != '' && inputs.ref || (github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha) }}
 
-# Triggers on all branches; S3 upload runs only on main, master, develop, *.*.x, integration/* (see release-artifacts job).
+# PRs: pull_request. Direct pushes: only long-lived / release lines — avoids duplicate runs when the same commit
+# is both "push" to a feature branch and "pull_request" sync (open PR to upstream from that branch).
+# S3 upload still only on main, master, develop, *.*.x, integration/* (UPLOAD_S3; see release-artifacts job).
 on:
   push:
+    branches:
+      - main
+      - master
+      - develop
+      - "integration/**"
+      - "release/**"
+      # e.g. 1.0.x; aligns with S3 / UPLOAD_S3 for dot-x lines
+      - "*.*.x"
     paths-ignore:
       - "*.md"
       - "LICENSE"
