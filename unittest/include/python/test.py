@@ -728,6 +728,5 @@ def run_all_tests():
 
 if __name__ == '__main__':
     exit_code = run_all_tests()
-    sys.stdout.flush()
-    sys.stderr.flush()
+    # Avoid flush before os._exit (Windows: pipe to pwsh can block if buffer is full; -u is unbuffered).
     os._exit(exit_code)

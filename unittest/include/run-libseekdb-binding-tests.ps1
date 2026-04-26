@@ -150,11 +150,14 @@ Invoke-BindingSection "Python" {
     Pop-Location
     Write-BindLog "Python: Pop-Location done"
   }
+  Write-BindLog "=== Python block finished; about to chdir to unittest\\include\\nodejs and run npm (no output is normal for several minutes on a cold run) ==="
+  Write-Host "::notice::[seekdb-bind] If the log looks idle after Python passed, the job is almost certainly in Node npm (download) or a native dependency build, not in Python. Timestamps below are from the runner."
 }
 
 Invoke-BindingSection "Node.js FFI (koffi)" {
   Push-Location (Join-Path $root "unittest\include\nodejs")
   try {
+    Write-BindLog "Entering nodejs/ — will run npm ci or npm install (this can be silent 5–15+ minutes on Windows)"
     Write-Host "::notice::Starting Node.js FFI (koffi): npm ci/install next — log may be quiet for minutes while packages download or compile."
     Write-Host "::group::Node FFI — npm install"
     try {
