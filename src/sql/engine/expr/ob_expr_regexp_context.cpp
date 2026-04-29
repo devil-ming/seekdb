@@ -83,7 +83,7 @@ int ObExprRegexContext::init(ObExprStringBuf &string_buf,
       }
     } else {
       //because uregex_open returns error if u_pattern_length is 0 or u_pattern is null,
-      //use ".{0}" to represent an empty pattern when the valid length of the pattern is 0, 
+      //use ".{0}" to represent an empty pattern when the valid length of the pattern is 0,
       //for example: regexp_count(convert(t1.c1, 'utf8'),'a')
       ObString const_pattern(".{0}");
       if (OB_FAIL(ObExprUtil::convert_string_collation(const_pattern,

@@ -682,7 +682,9 @@ int ObVectorIndexRefresher::do_rebuild() {
     LOG_WARN("no need to start rebuild", K(base_table_row_cnt));
   }
 
-  DEBUG_SYNC(BEFORE_DBMS_VECTOR_REBUILD);
+  if (OB_SUCC(ret)) {
+    DEBUG_SYNC(BEFORE_DBMS_VECTOR_REBUILD);
+  }
 
   if (OB_FAIL(ret)) {
   } else if (is_hybrid_vector &&

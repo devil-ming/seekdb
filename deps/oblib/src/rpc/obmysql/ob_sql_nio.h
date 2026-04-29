@@ -79,4 +79,3 @@ private:
 }; // end namespace oceanbase
 
 #endif /* OCEANBASE_OBMYSQL_OB_SQL_NIO_H_ */
-

@@ -76,14 +76,14 @@ public:
 
   class mod_info_map_t
   {
-    public: 
+    public:
       typedef hash::ObHashMap<Info, std::pair<int64_t, int64_t>> hashmap;
       int create(int64_t bucket_num)
       {
         ObMemAttr attr(common::OB_SERVER_TENANT_ID, MOD_INFO_MAP_STR, ObCtxIds::DEFAULT_CTX_ID);
         return map_.create(bucket_num, attr, attr);
       }
-      
+
       hashmap *operator->()
       {
         return &map_;

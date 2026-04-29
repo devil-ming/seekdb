@@ -120,7 +120,7 @@ int ObMPPacketSender::init(rpc::ObRequest *req)
 int ObMPPacketSender::clone_from(ObMPPacketSender& that, int64_t com_offset)
 {
   int ret = OB_SUCCESS;
-  if (OB_FAIL(do_init(that.req_, that.seq_, that.comp_context_.seq_ + com_offset, 
+  if (OB_FAIL(do_init(that.req_, that.seq_, that.comp_context_.seq_ + com_offset,
                       that.conn_valid_, that.req_has_wokenup_, that.query_receive_ts_))) {
     SERVER_LOG(ERROR, "clone packet sender fail", K(ret));
   } else {
@@ -493,7 +493,7 @@ int ObMPPacketSender::send_error_packet(int err,
       if (strlen(wb->get_sql_state()) == 0) {
         if (OB_FAIL(epacket.set_sqlstate(ob_sqlstate(err)))) {
           LOG_WARN("set sql_state failed", K(ret));
-        }  
+        }
       } else if (OB_FAIL(epacket.set_sqlstate(wb->get_sql_state()))) {
         LOG_WARN("set sql_state failed", K(ret));
       }
@@ -813,7 +813,7 @@ int ObMPPacketSender::send_ok_packet(ObSQLSessionInfo &session, ObOKPParam &ok_p
     // oceanbase proxy (aka. odp) need extra ok packet after retruns status packet.
     // for this logic, we use response_compose_packet to send packet
     } else {
-      if (NULL != pkt && 
+      if (NULL != pkt &&
             OB_FAIL(response_compose_packet(*pkt, okp, &session,
                             NULL != ez_buf_ && !ok_param.has_more_result_))) {
         LOG_WARN("response ok packet fail", K(pkt), K(ret));
@@ -997,7 +997,7 @@ int ObMPPacketSender::try_encode_with(ObMySQLPacket &pkt,
         } else {
           // try again with larger buf size
           const int64_t new_alloc_size = TRY_EZ_BUF_SIZES[try_steps++];
-          // refer to doc: 
+          // refer to doc:
           if (OB_SIZE_OVERFLOW != last_ret && OB_BUF_NOT_ENOUGH != last_ret) {
             ret = last_ret;
             LOG_WARN("last_ret is not size overflow, need check code", K(last_ret));
@@ -1059,7 +1059,7 @@ int ObMPPacketSender::flush_buffer(const bool is_last)
       // We use the field to indicate if we should set `is last packet flag`
       proto20_context_.is_filename_packet_ = false;
     }
-    
+
     //int64_t buf_sz = ez_buf_->last - ez_buf_->pos;
     if (OB_SUCCESS != ret) {
     } else if (ObRequest::TRANSPORT_PROTO_EASY == nio_protocol_) {
@@ -1281,4 +1281,3 @@ int ObMPPacketSender::release_read_handle()
 
 }; // end namespace observer
 }; // end namespace oceanbase
-

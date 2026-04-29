@@ -5099,8 +5099,11 @@ int ObLSTabletService::insert_vector_index_rows(
                                                            &vec_idx_param,
                                                            vec_dim);
     if (OB_SUCCESS == tmp_ret) {
-      adaptor_guard.get_adatper()->update_index_id_dml_scn(run_ctx.store_ctx_.mvcc_acc_ctx_.snapshot_.version_);
-      adaptor_guard.get_adatper()->update_can_skip(NOT_SKIP);
+      const bool is_async_index = share::ObVectorIndexUtil::is_sync_mode_async(vec_idx_param);
+      if (!is_async_index) {
+        adaptor_guard.get_adatper()->update_index_id_dml_scn(run_ctx.store_ctx_.mvcc_acc_ctx_.snapshot_.version_);
+        adaptor_guard.get_adatper()->update_can_skip(NOT_SKIP);
+      }
     } else {
       LOG_WARN("acquire_adapter_guard for index_id table failed, skip adapter update",
                K(tmp_ret), K(run_ctx.relative_table_.get_tablet_id()));

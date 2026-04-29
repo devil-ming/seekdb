@@ -780,7 +780,7 @@ int64_t ObConfigReadableIntParser::get(const char *str, bool &valid)
     } else if (value < 0) {
       valid = false;
     } else if ('\0' == *p_unit) {
-      // 
+      //
       // without any unit, do nothing
     } else if (0 == STRCASECMP("k", p_unit)) {
       value *= UNIT_K;
@@ -855,7 +855,7 @@ bool ObConfigSTScredentialChecker::check(const ObConfigItem &t) const
   bool flag = true;
   const char *tmp_credential = t.str();
   ObStsCredential key;
-  if (OB_ISNULL(tmp_credential) || OB_UNLIKELY(strlen(tmp_credential) <= 0 
+  if (OB_ISNULL(tmp_credential) || OB_UNLIKELY(strlen(tmp_credential) <= 0
       || strlen(tmp_credential) > OB_MAX_STS_CREDENTIAL_LENGTH)) {
     flag = false;
     OB_LOG(WARN, "invalid sts credential", KP(tmp_credential));
@@ -1381,6 +1381,11 @@ bool ObConfigArchiveLagTargetChecker::check(const uint64_t tenant_id, const ObAd
       }
     } else if (OB_FAIL(archive_dest.set(archive_dest_str))) {
       OB_LOG(WARN, "fail to set archive dest", K(ret), K(archive_dest_str));
+    } else if (archive_dest.is_storage_type_s3()) {
+      is_valid = MIN_LAG_TARGET_FOR_S3 <= value;
+      if (!is_valid) {
+        LOG_USER_ERROR(OB_OP_NOT_ALLOW, "set archive_lag_target smaller than 60s when log_archive_dest is S3 is");
+      }
     } else {
       is_valid = true;
     }
@@ -1494,8 +1499,10 @@ bool ObConfigS3URLEncodeTypeChecker::check(const ObConfigItem &t) const
   common::ObString tmp_str(t.str());
   if (0 == tmp_str.case_compare("default")) {
     bret = true;
+    Aws::Http::SetCompliantRfc3986Encoding(false);
   } else if (0 == tmp_str.case_compare("compliantRfc3986Encoding")) {
     bret = true;
+    Aws::Http::SetCompliantRfc3986Encoding(true);
   } else {
     bret = false;
   }
