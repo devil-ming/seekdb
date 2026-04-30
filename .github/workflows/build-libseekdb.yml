@@ -691,19 +691,80 @@ jobs:
         shell: pwsh
         run: choco install mingw maven -y --no-progress
 
-      - name: Binding tests (Windows)
-        id: binding_windows_tests
+      # One job step per language: if something hangs, the in-progress step name in the Actions UI shows
+      # whether the stall is in Python, npm, node-gyp, cargo, go, or Java (not “whole binding” vs global timeout).
+      - name: Binding tests — Python (Windows)
+        id: bind_win_python
         continue-on-error: true
         shell: pwsh
         env:
-          BUILD_TYPE: release
+          SEEKDB_BINDING_SECTION: Python
         run: |
           Set-StrictMode -Version Latest
           $ErrorActionPreference = "Stop"
-          # Refresh PATH after Chocolatey (gcc / mvn)
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
           Get-Command gcc | Out-Host
           Get-Command mvn | Out-Host
+          .\unittest\include\run-libseekdb-binding-tests.ps1 -RepoRoot "$PWD" -ContinueOnError
+
+      - name: Binding tests — Node FFI / koffi (Windows)
+        id: bind_win_node_ffi
+        continue-on-error: true
+        shell: pwsh
+        env:
+          SEEKDB_BINDING_SECTION: NodeFfi
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = "Stop"
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+          .\unittest\include\run-libseekdb-binding-tests.ps1 -RepoRoot "$PWD" -ContinueOnError
+
+      - name: Binding tests — Node N-API (Windows)
+        id: bind_win_node_napi
+        continue-on-error: true
+        shell: pwsh
+        env:
+          SEEKDB_BINDING_SECTION: NodeNapi
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = "Stop"
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+          .\unittest\include\run-libseekdb-binding-tests.ps1 -RepoRoot "$PWD" -ContinueOnError
+
+      - name: Binding tests — Rust (Windows)
+        id: bind_win_rust
+        continue-on-error: true
+        shell: pwsh
+        env:
+          SEEKDB_BINDING_SECTION: Rust
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = "Stop"
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+          .\unittest\include\run-libseekdb-binding-tests.ps1 -RepoRoot "$PWD" -ContinueOnError
+
+      - name: Binding tests — Go (Windows)
+        id: bind_win_go
+        continue-on-error: true
+        shell: pwsh
+        env:
+          SEEKDB_BINDING_SECTION: Go
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = "Stop"
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+          .\unittest\include\run-libseekdb-binding-tests.ps1 -RepoRoot "$PWD" -ContinueOnError
+
+      - name: Binding tests — Java (Windows)
+        id: bind_win_java
+        continue-on-error: true
+        shell: pwsh
+        env:
+          SEEKDB_BINDING_SECTION: Java
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = "Stop"
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
           .\unittest\include\run-libseekdb-binding-tests.ps1 -RepoRoot "$PWD" -ContinueOnError
 
       - name: Pack libseekdb zip (Windows)
@@ -736,10 +797,14 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          if ("${{ steps.binding_windows_tests.outcome }}" -eq "failure") {
-            Write-Host "::error::One or more Windows binding test sections failed (see log above)"
-            exit 1
-          }
+          $failed = $false
+          if ("${{ steps.bind_win_python.outcome }}" -eq "failure") { Write-Host "::error::Binding section failed: Python"; $failed = $true }
+          if ("${{ steps.bind_win_node_ffi.outcome }}" -eq "failure") { Write-Host "::error::Binding section failed: Node FFI (koffi)"; $failed = $true }
+          if ("${{ steps.bind_win_node_napi.outcome }}" -eq "failure") { Write-Host "::error::Binding section failed: Node N-API"; $failed = $true }
+          if ("${{ steps.bind_win_rust.outcome }}" -eq "failure") { Write-Host "::error::Binding section failed: Rust"; $failed = $true }
+          if ("${{ steps.bind_win_go.outcome }}" -eq "failure") { Write-Host "::error::Binding section failed: Go"; $failed = $true }
+          if ("${{ steps.bind_win_java.outcome }}" -eq "failure") { Write-Host "::error::Binding section failed: Java"; $failed = $true }
+          if ($failed) { exit 1 }
           Write-Host "All Windows binding test sections succeeded."
 
   # ---------- Collect libseekdb artifacts and upload to S3 (runs only when all needed build jobs succeed, including binding tests) ----------

@@ -4,6 +4,20 @@
  */
 
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
+
+function bindingExitProbe(line) {
+    if (process.env.SEEKDB_BINDING_EXIT_PROBE !== '1' && process.env.SEEKDB_NODE_BINDING_PROBE !== '1') {
+        return;
+    }
+    try {
+        const probePath = path.join(os.tmpdir(), `seekdb_binding_exit_probe_${process.pid}.log`);
+        fs.appendFileSync(probePath, `${new Date().toISOString()} ${line}\n`);
+    } catch (_) {
+        /* ignore */
+    }
+}
 
 // Load the native module
 const seekdb = require('./build/Release/seekdb.node');
@@ -695,6 +709,21 @@ function runAllTests() {
         console.log(`Total: ${passed}/${total} passed, ${failed} failed`);
         console.log('');
 
+        // Same-directory absolute open before close (aligned with python test.py; avoids a second node process on Windows).
+        if (passed === total) {
+            const absSame = path.resolve(dbDir);
+            process.stdout.write('[TEST] Absolute path (same DB directory)               ... ');
+            try {
+                seekdb.open(absSame);
+                console.log('PASS');
+            } catch (e) {
+                console.log('FAIL');
+                console.error(`::error::Absolute-path same-directory check failed: ${e.message}`);
+                try { seekdb.close(); } catch { }
+                return 1;
+            }
+        }
+
         seekdb.close();
 
         if (passed === total) {
@@ -718,8 +747,11 @@ function runAllTests() {
 
 // Run tests
 try {
-    process.exit(runAllTests());
+    const code = runAllTests();
+    bindingExitProbe(`before_process_exit code=${code}`);
+    process.exit(code);
 } catch (error) {
     console.error('::error::Fatal error:', error.message);
+    bindingExitProbe('before_process_exit code=1');
     process.exit(1);
 }

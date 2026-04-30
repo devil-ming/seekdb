@@ -11,7 +11,24 @@
 // Node.js SeekDB FFI Binding Test Suite
 // Following database binding layer test requirements
 
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
 const { open, close, SeekdbConnection } = require('./seekdb');
+
+/** Sync probe: process may hang in Windows DLL unload after process.exit (see run-libseekdb-binding-tests.ps1). */
+function bindingExitProbe(line) {
+    if (process.env.SEEKDB_BINDING_EXIT_PROBE !== '1' && process.env.SEEKDB_NODE_BINDING_PROBE !== '1') {
+        return;
+    }
+    try {
+        const probePath = path.join(os.tmpdir(), `seekdb_binding_exit_probe_${process.pid}.log`);
+        fs.appendFileSync(probePath, `${new Date().toISOString()} ${line}\n`);
+    } catch (_) {
+        /* ignore */
+    }
+}
 
 // Test database open
 function testOpen() {
@@ -805,6 +822,22 @@ function runAllTests() {
         console.log(`Total: ${passed}/${total} passed, ${failed} failed`);
         console.log('');
 
+        // Same-directory absolute path (matches python test.py) — must run before close(), in-process.
+        // A second child process re-open on Windows can hit pidfile/lock or path edge cases in CI.
+        if (passed === total) {
+            const absSame = path.resolve(dbDir);
+            process.stdout.write('[TEST] Absolute path (same DB directory)               ... ');
+            try {
+                open(absSame);
+                console.log('PASS');
+            } catch (e) {
+                console.log('FAIL');
+                console.error(`::error::Absolute-path same-directory check failed: ${e.message}`);
+                try { close(); } catch { }
+                return 1;
+            }
+        }
+
         // Close database at the end
         close();
 
@@ -827,12 +860,13 @@ function runAllTests() {
 
 // Run tests if executed directly
 if (require.main === module) {
-    process.exit(runAllTests());
+    const code = runAllTests();
+    bindingExitProbe(`before_process_exit code=${code}`);
+    process.exit(code);
 }
 
 module.exports = {
     testOpen,
-    testAbsolutePathOpen,
     testConnection,
     testErrorHandling,
     testResultOperations,

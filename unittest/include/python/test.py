@@ -21,6 +21,8 @@ import json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from seekdb import Seekdb, SeekdbConnection, SeekdbError
+from seekdb_binding_probe import emit as _probe
+from seekdb_binding_probe import init_probe_log as _probe_init
 
 
 def test_open():
@@ -622,6 +624,8 @@ def test_binary_parameter_binding():
 
 def run_all_tests():
     """Main test runner"""
+    _probe_init()
+    _probe("test.py:run_all_tests_entry")
     print('=' * 70)
     print('SeekDB Python FFI Binding Test Suite')
     print('=' * 70)
@@ -629,7 +633,9 @@ def run_all_tests():
     
     db_dir = sys.argv[1] if len(sys.argv) > 1 else './seekdb.db'
     try:
+        _probe("test.py:before_first_Seekdb_open")
         Seekdb.open(db_dir)
+        _probe("test.py:after_first_Seekdb_open")
     except Exception as e:
         print(f'::error::Failed to open database: {e}', file=sys.stderr)
         return 1
@@ -694,10 +700,12 @@ def run_all_tests():
         # seekdb_close() intentionally skips OBSERVER.destroy(), so a second full init usually fails (-2).
         if passed == total:
             abs_same = os.path.abspath(db_dir)
+            _probe("test.py:before_abs_path_Seekdb_open")
             sys.stdout.write('[TEST] Absolute path (same DB directory)               ... ')
             sys.stdout.flush()
             try:
                 Seekdb.open(abs_same)
+                _probe("test.py:after_abs_path_Seekdb_open")
                 print('PASS')
             except Exception as e:
                 print('FAIL')
@@ -705,12 +713,22 @@ def run_all_tests():
                 Seekdb.close()
                 return 1
 
+        _probe("test.py:before_final_Seekdb_close")
         Seekdb.close()
+        _probe("test.py:after_final_Seekdb_close")
 
         if passed == total:
+            _probe("test.py:before_success_messages")
             print('::notice::All tests passed successfully!')
             print('=' * 70)
-            return 0
+            _probe("test.py:after_success_messages")
+            try:
+                sys.stdout.flush()
+                sys.stderr.flush()
+            except Exception:
+                pass
+            _probe("test.py:before_os_exit_0")
+            os._exit(0)
         else:
             print(f'::error::{failed} test(s) failed', file=sys.stderr)
             print('=' * 70)
@@ -727,6 +745,8 @@ def run_all_tests():
 
 
 if __name__ == '__main__':
+    _probe_init()
+    _probe("test.py:main_before_run_all_tests")
     exit_code = run_all_tests()
-    # Avoid flush before os._exit (Windows: pipe to pwsh can block if buffer is full; -u is unbuffered).
+    _probe("test.py:main_after_run_all_tests")
     os._exit(exit_code)

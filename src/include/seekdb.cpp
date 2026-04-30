@@ -460,9 +460,30 @@ static void sigbus_handler_during_close(int sig, siginfo_t* info, void* context)
 // - same_embedded_path: compare two paths (e.g. requested vs g_embedded_base_dir)
 // - g_embedded_base_dir: stored absolute path of opened db; reuse open if same path
 
+static bool is_path_absolute(const char* p)
+{
+    if (p == nullptr || p[0] == '\0') {
+        return false;
+    }
+    if (p[0] == '/') {
+        return true;
+    }
+#ifdef _WIN32
+    // "C:\..." or "C:/..."
+    if (((p[0] >= 'A' && p[0] <= 'Z') || (p[0] >= 'a' && p[0] <= 'z')) && p[1] == ':') {
+        return true;
+    }
+    // UNC "\\server\share\..."
+    if (p[0] == '\\' && p[1] == '\\') {
+        return true;
+    }
+#endif
+    return false;
+}
+
 static int to_absolute_path(const char* cwd, ObSqlString& dir) {
     int ret = OB_SUCCESS;
-    if (!dir.empty() && dir.ptr()[0] != '\0' && dir.ptr()[0] != '/') {
+    if (!dir.empty() && dir.ptr()[0] != '\0' && !is_path_absolute(dir.ptr())) {
         char abs_path[OB_MAX_FILE_NAME_LENGTH] = {0};
         if (snprintf(abs_path, sizeof(abs_path), "%s/%s", cwd, dir.ptr()) >= static_cast<int>(sizeof(abs_path))) {
             ret = OB_SIZE_OVERFLOW;

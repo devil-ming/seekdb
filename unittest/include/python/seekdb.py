@@ -38,6 +38,13 @@ import sys
 from ctypes import c_int, c_int32, c_int64, c_uint32, c_uint64, c_char_p, c_void_p, c_bool, c_double, c_size_t, POINTER, byref
 from typing import Optional, List, Any, Iterator
 
+try:
+    from seekdb_binding_probe import emit as _hang_probe_emit
+except ImportError:
+
+    def _hang_probe_emit(_step: str) -> None:
+        pass
+
 # Error codes
 SEEKDB_SUCCESS = 0
 SEEKDB_ERROR_INVALID_PARAM = -1
@@ -511,7 +518,9 @@ class Seekdb:
             db_dir: Database directory path
         """
         lib = cls._get_lib()
+        _hang_probe_emit("seekdb.py:before_ctypes_seekdb_open")
         ret = lib.seekdb_open(db_dir.encode('utf-8'))
+        _hang_probe_emit("seekdb.py:after_ctypes_seekdb_open")
         if ret != SEEKDB_SUCCESS:
             raise SeekdbError(ret, f"Failed to open database at '{db_dir}'")
         cls._opened = True
@@ -520,7 +529,9 @@ class Seekdb:
     def close(cls):
         """Close the embedded database."""
         if cls._lib and cls._opened:
+            _hang_probe_emit("seekdb.py:before_ctypes_seekdb_close")
             cls._lib.seekdb_close()
+            _hang_probe_emit("seekdb.py:after_ctypes_seekdb_close")
             cls._opened = False
     
     @classmethod

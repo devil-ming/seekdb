@@ -16,7 +16,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
+
 	"seekdb/seekdb"
 )
 
@@ -987,7 +989,23 @@ func runAllTests() int {
 	
 	fmt.Printf("Total: %d/%d passed, %d failed\n", passed, total, failed)
 	fmt.Println()
-	
+
+	// Same-directory absolute open before teardown (aligned with python test.py).
+	if passed == total {
+		absSame, err := filepath.Abs(dbDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "::error::Absolute path resolve failed: %v\n", err)
+			return 1
+		}
+		fmt.Printf("[TEST] %-40s ... ", "Absolute path (same DB directory)")
+		if err := seekdb.Open(absSame); err != nil {
+			fmt.Println("FAIL")
+			fmt.Fprintf(os.Stderr, "::error::Absolute-path same-directory check failed: %v\n", err)
+			return 1
+		}
+		fmt.Println("PASS")
+	}
+
 	if passed == total {
 		fmt.Println("::notice::All tests passed successfully!")
 		fmt.Println(strings.Repeat("=", 70))
@@ -999,6 +1017,23 @@ func runAllTests() int {
 	}
 }
 
+func bindingExitProbe(code int) {
+	if os.Getenv("SEEKDB_BINDING_EXIT_PROBE") != "1" {
+		return
+	}
+	pid := os.Getpid()
+	path := filepath.Join(os.TempDir(), fmt.Sprintf("seekdb_binding_exit_probe_%d.log", pid))
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	_, _ = fmt.Fprintf(f, "before_process_exit code=%d\n", code)
+	_ = f.Sync()
+}
+
 func main() {
-	os.Exit(runAllTests())
+	code := runAllTests()
+	bindingExitProbe(code)
+	os.Exit(code)
 }

@@ -5,16 +5,37 @@
   Requires for full suite: gcc (MinGW) for Go CGO, mvn for Java JNI.
 
   -ContinueOnError runs every language section even after a failure; exit code is non-zero if any section failed.
+
+  CI may set SEEKDB_BINDING_SECTION to Python | NodeFfi | NodeNapi | Rust | Go | Java to run one language per job step
+  (pinpoints which toolchain hangs). Omit or All runs the full suite in one process (local default).
 #>
 param(
   [Parameter(Mandatory = $false)]
   [string]$RepoRoot = "",
   [Parameter(Mandatory = $false)]
-  [switch]$ContinueOnError
+  [switch]$ContinueOnError,
+  # Run only one language section (use env SEEKDB_BINDING_SECTION in CI). Default All = full suite in one process.
+  [Parameter(Mandatory = $false)]
+  [ValidateSet('All', 'Python', 'NodeFfi', 'NodeNapi', 'Rust', 'Go', 'Java')]
+  [string]$BindSection = 'All'
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+$script:BindSectionMode = $BindSection
+if ($env:SEEKDB_BINDING_SECTION -and $env:SEEKDB_BINDING_SECTION.Trim().Length -gt 0) {
+  $script:BindSectionMode = $env:SEEKDB_BINDING_SECTION.Trim()
+}
+$_allowedBind = @('All', 'Python', 'NodeFfi', 'NodeNapi', 'Rust', 'Go', 'Java')
+if ($_allowedBind -notcontains $script:BindSectionMode) {
+  throw "Invalid BindSection / SEEKDB_BINDING_SECTION: '$script:BindSectionMode'. Use: $($_allowedBind -join ', ')"
+}
+function Test-BindSection {
+  param([Parameter(Mandatory = $true)][string]$Name)
+  if ($script:BindSectionMode -eq 'All') { return $true }
+  return ($script:BindSectionMode -eq $Name)
+}
 
 function Get-RepoRoot {
   if ($RepoRoot) { return (Resolve-Path $RepoRoot).Path }
@@ -80,6 +101,111 @@ function Write-BindLog {
   try { [Console]::Out.Flush() } catch {}
 }
 
+# Absolute-path validation runs inside each language test (same process as python test.py abs_same), not a second child — avoids Windows pidfile / lock issues.
+
+# Prefer JDK from JAVA_HOME (GitHub setup-java / Temurin); plain `java` on PATH may be an older JRE (class file mismatch).
+function Get-JavaExecutable {
+  $try = Join-Path $env:JAVA_HOME 'bin\java.exe'
+  if ($env:JAVA_HOME -and (Test-Path -LiteralPath $try)) {
+    return $try
+  }
+  return (Get-Command java).Source
+}
+
+# Wait for a child process with Refresh/WaitForExit chunks + wall-clock deadline + taskkill /T on expiry.
+function Wait-ProcessWithDeadline {
+  param(
+    [Parameter(Mandatory = $true)]
+    [System.Diagnostics.Process]$Process,
+    [Parameter(Mandatory = $true)]
+    [int]$TimeoutMs,
+    [Parameter(Mandatory = $true)]
+    [string]$Label,
+    [Parameter(Mandatory = $false)]
+    [int]$HeartbeatSec = 60,
+    # Child writes before_process_exit to %TEMP%\seekdb_binding_exit_probe_<pid>.log; native teardown may still hang.
+    [switch]$UseBindingExitProbe,
+    [Parameter(Mandatory = $false)]
+    [int]$BindingExitProbeGraceMs = 15000
+  )
+  $deadline = [DateTime]::UtcNow.AddMilliseconds($TimeoutMs)
+  $timedOut = $false
+  $heartbeatUtc = [DateTime]::UtcNow
+  $probeFirstUtc = $null
+  $forcedFromProbe = $false
+  $forcedExitCode = 0
+  while ($true) {
+    $Process.Refresh()
+    if ($Process.HasExited) { break }
+    if ([DateTime]::UtcNow -ge $deadline) {
+      $timedOut = $true
+      Write-Host "::error::${Label}: exceeded ${TimeoutMs} ms; taskkill /F /T pid=$($Process.Id)"
+      & taskkill.exe /F /T /PID $Process.Id 2>$null
+      $Process.Refresh()
+      if (-not $Process.HasExited) {
+        $null = $Process.WaitForExit(45000)
+      }
+      break
+    }
+    if ($UseBindingExitProbe) {
+      $probePath = Join-Path $env:TEMP "seekdb_binding_exit_probe_$($Process.Id).log"
+      if (Test-Path -LiteralPath $probePath) {
+        $pr = Get-Content -LiteralPath $probePath -Raw -ErrorAction SilentlyContinue
+        if ($pr -match 'before_process_exit code=(-?\d+)') {
+          $probeCode = [int]$Matches[1]
+          if ($null -eq $probeFirstUtc) {
+            $probeFirstUtc = [DateTime]::UtcNow
+            Write-Host "::notice::[seekdb-bind] binding exit probe seen pid=$($Process.Id) code=$probeCode (${BindingExitProbeGraceMs}ms grace, then Stop-Process -Force if still stuck in DLL unload)"
+            [Console]::Out.Flush()
+          }
+          elseif (([DateTime]::UtcNow - $probeFirstUtc).TotalMilliseconds -ge $BindingExitProbeGraceMs) {
+            Write-Host "::notice::[seekdb-bind] process still alive after probe+grace — forcing Stop-Process pid=$($Process.Id) (Windows native teardown hang workaround)"
+            Stop-Process -Id $Process.Id -Force -ErrorAction SilentlyContinue
+            $Process.Refresh()
+            Start-Sleep -Milliseconds 200
+            if (-not $Process.HasExited) {
+              & taskkill.exe /F /T /PID $Process.Id 2>$null
+              $Process.Refresh()
+              if (-not $Process.HasExited) {
+                $null = $Process.WaitForExit(8000)
+              }
+            }
+            $forcedFromProbe = $true
+            $forcedExitCode = $probeCode
+            break
+          }
+        }
+      }
+    }
+    $remainingMs = [Math]::Max(1, [int](($deadline - [DateTime]::UtcNow).TotalMilliseconds))
+    $chunkMs = [Math]::Min(500, $remainingMs)
+    try {
+      $null = $Process.WaitForExit($chunkMs)
+    }
+    catch {
+      $Process.Refresh()
+    }
+    $Process.Refresh()
+    if ($Process.HasExited) { break }
+    $nowUtc = [DateTime]::UtcNow
+    if (($nowUtc - $heartbeatUtc).TotalSeconds -ge $HeartbeatSec) {
+      $heartbeatUtc = $nowUtc
+      Write-Host "::notice::[seekdb-bind] still waiting for ${Label} pid=$($Process.Id) (${TimeoutMs}ms max)"
+      [Console]::Out.Flush()
+    }
+  }
+  $exitCode = if ($forcedFromProbe) {
+    $forcedExitCode
+  }
+  elseif ($timedOut) {
+    -1
+  }
+  else {
+    $Process.ExitCode
+  }
+  return @{ TimedOut = $timedOut; ExitCode = $exitCode; ForcedAfterProbe = $forcedFromProbe }
+}
+
 # Stream npm lines to CI log (native npm output can appear buffered otherwise).
 function Install-NodeBindingDeps {
   Write-BindLog "npm: preparing in $(Get-Location)"
@@ -88,20 +214,103 @@ function Install-NodeBindingDeps {
   node --version | ForEach-Object { Write-Host "[node] $_"; Write-BindLog "node $_" }
   npm --version | ForEach-Object { Write-Host "[npm] $_"; Write-BindLog "npm $_" }
 
-  # Do not pipe npm into ForEach-Object — exit code becomes unreliable on Windows PowerShell.
-  if (Test-Path "package-lock.json") {
-    Write-BindLog "npm: starting npm ci (verbose; do not pipe — preserves exit code)"
-    & npm ci --no-audit --no-fund --foreground-scripts --loglevel verbose
-  } else {
-    Write-BindLog "npm: starting npm install (verbose)"
-    & npm install --no-audit --no-fund --foreground-scripts --loglevel verbose
+  # Avoid indefinite hangs on stalled registry downloads (does not fix stuck native postinstall builds).
+  try {
+    npm config set fetch-timeout 600000 2>$null
+    npm config set fetch-retries 5 2>$null
   }
+  catch {}
 
-  if ($LASTEXITCODE -ne 0) {
-    Write-BindLog "npm FAILED exit=$LASTEXITCODE in $(Get-Location)"
-    throw "npm failed in $(Get-Location) (exit $LASTEXITCODE)"
+  $npmTimeoutMs = 2400000
+  if ($env:SEEKDB_NODE_NPM_TIMEOUT_MS -match '^\d+$') {
+    $npmTimeoutMs = [int]$env:SEEKDB_NODE_NPM_TIMEOUT_MS
+  }
+  Write-BindLog "npm: wall-clock timeout ${npmTimeoutMs}ms"
+
+  $npmCmd = (Get-Command npm).Source
+  if (Test-Path "package-lock.json") {
+    Write-BindLog "npm: starting npm ci (verbose; Start-Process + deadline)"
+    $argList = @('ci', '--no-audit', '--no-fund', '--foreground-scripts', '--loglevel', 'verbose')
+  }
+  else {
+    Write-BindLog "npm: starting npm install (verbose; Start-Process + deadline)"
+    $argList = @('install', '--no-audit', '--no-fund', '--foreground-scripts', '--loglevel', 'verbose')
+  }
+  $p = Start-Process -FilePath $npmCmd -ArgumentList $argList -WorkingDirectory (Get-Location) -PassThru -NoNewWindow
+  if ($null -eq $p) {
+    throw "Start-Process npm returned null"
+  }
+  $r = Wait-ProcessWithDeadline -Process $p -TimeoutMs $npmTimeoutMs -Label "npm ci/install" -HeartbeatSec 120
+  if ($r.TimedOut) {
+    Write-BindLog "npm FAILED: timed out after ${npmTimeoutMs} ms in $(Get-Location)"
+    throw "npm ci/install timed out after ${npmTimeoutMs} ms"
+  }
+  if ($r.ExitCode -ne 0) {
+    Write-BindLog "npm FAILED exit=$($r.ExitCode) in $(Get-Location)"
+    throw "npm failed in $(Get-Location) (exit $($r.ExitCode))"
   }
   Write-BindLog "npm: finished OK in $(Get-Location)"
+}
+
+# Start-Process + wall-clock + optional seekdb_binding_exit_probe_* (all native bind tests: node, rust, go, java).
+function Invoke-ExternalTestWithBindingExitProbe {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$FilePath,
+    [Parameter(Mandatory = $true)]
+    [string[]]$ArgumentList,
+    [Parameter(Mandatory = $true)]
+    [string]$Description
+  )
+  $testMs = 900000
+  if ($env:SEEKDB_BINDING_TEST_TIMEOUT_MS -match '^\d+$') {
+    $testMs = [int]$env:SEEKDB_BINDING_TEST_TIMEOUT_MS
+  }
+  elseif ($env:SEEKDB_NODE_TEST_TIMEOUT_MS -match '^\d+$') {
+    $testMs = [int]$env:SEEKDB_NODE_TEST_TIMEOUT_MS
+  }
+  $graceMs = 15000
+  if ($env:SEEKDB_NODE_POST_SUCCESS_FORCE_KILL_MS -match '^\d+$') {
+    $graceMs = [int]$env:SEEKDB_NODE_POST_SUCCESS_FORCE_KILL_MS
+  }
+  Write-BindLog "$Description (wall-clock ${testMs}ms; exit-probe grace ${graceMs}ms)"
+  $prevProbe = $env:SEEKDB_BINDING_EXIT_PROBE
+  $env:SEEKDB_BINDING_EXIT_PROBE = '1'
+  try {
+    $p = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -WorkingDirectory (Get-Location) -PassThru -NoNewWindow
+    if ($null -eq $p) {
+      throw "Start-Process returned null ($Description)"
+    }
+    $nr = Wait-ProcessWithDeadline -Process $p -TimeoutMs $testMs -Label $Description -HeartbeatSec 60 -UseBindingExitProbe -BindingExitProbeGraceMs $graceMs
+  }
+  finally {
+    if ($null -eq $prevProbe) {
+      Remove-Item Env:\SEEKDB_BINDING_EXIT_PROBE -ErrorAction SilentlyContinue
+    }
+    else {
+      $env:SEEKDB_BINDING_EXIT_PROBE = $prevProbe
+    }
+  }
+  if ($nr.ForcedAfterProbe) {
+    Write-Host "::notice::[seekdb-bind] $Description — exit code from probe $($nr.ExitCode) (process did not terminate; likely DLL unload hang)"
+  }
+  if ($nr.TimedOut) {
+    throw "$Description timed out after ${testMs} ms"
+  }
+  if ($nr.ExitCode -ne 0) {
+    throw "$Description failed (exit $($nr.ExitCode))"
+  }
+}
+
+function Invoke-NodeWithDeadline {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string[]]$NodeArgs,
+    [Parameter(Mandatory = $true)]
+    [string]$Description
+  )
+  $nodeExe = (Get-Command node).Source
+  Invoke-ExternalTestWithBindingExitProbe -FilePath $nodeExe -ArgumentList $NodeArgs -Description "node $Description"
 }
 
 function Invoke-BindingSection {
@@ -127,17 +336,38 @@ function Invoke-BindingSection {
   }
 }
 
+if (-not (Test-BindSection 'Python')) { Write-BindLog "SKIP section Python (BindSection=$script:BindSectionMode)" }
+if (Test-BindSection 'Python') {
 Invoke-BindingSection "Python" {
   Push-Location (Join-Path $root "unittest\include\python")
   try {
     Write-Host "::group::Python binding tests"
     try {
       if (Test-Path "seekdb.db") { Remove-Item -Recurse -Force "seekdb.db" }
-      if (Test-Path "seekdb_abs.db") { Remove-Item -Recurse -Force "seekdb_abs.db" }
       $pyExe = (Get-Command python).Source
-      Write-BindLog "Python: running $pyExe -u test.py ..."
-      & $pyExe -u test.py ".\seekdb.db" "test"
-      $pyExit = $LASTEXITCODE
+      # Stream directly to the runner log. Do NOT use PowerShell *> file redirect here: embedding + native
+      # threads writing stdout/stderr to one redirected file has caused indefinite hangs on Windows CI.
+      Write-BindLog "Python: running $pyExe -u test.py (stdout/stderr inherit host — live stream for CI) ..."
+      $env:PYTHONUNBUFFERED = "1"
+      # If python.exe never returns, the whole CI step never finishes. Use Start-Process + wall-clock deadline, then taskkill /T; exit 1 stops the script (do not continue to Node).
+      $timeoutMs = 600000
+      Write-BindLog "Python: wall-clock timeout ${timeoutMs}ms"
+      $p = Start-Process -FilePath $pyExe -ArgumentList @('-u', 'test.py', '.\seekdb.db', 'test') -WorkingDirectory (Get-Location) -PassThru -NoNewWindow
+      if ($null -eq $p) {
+        throw "Start-Process python returned null"
+      }
+      $wr = Wait-ProcessWithDeadline -Process $p -TimeoutMs $timeoutMs -Label "python test.py" -HeartbeatSec 60
+      $pythonTimedOut = $wr.TimedOut
+      $pyExit = if ($pythonTimedOut) { -1 } else { $wr.ExitCode }
+      if ($pythonTimedOut) {
+        Write-Host "::error::Python binding tests exceeded ${timeoutMs} ms"
+      }
+      Remove-Item Env:\PYTHONUNBUFFERED -ErrorAction SilentlyContinue
+      if ($pythonTimedOut) {
+        Write-Host "::error::Stopping run-libseekdb-binding-tests.ps1 after Python timeout (downstream languages skipped)."
+        # Nested scriptblock: plain exit can be scoped oddly; ExitProcess guarantees the CI step ends.
+        [System.Environment]::Exit(1)
+      }
       Write-BindLog "Python: LASTEXITCODE=$pyExit"
       Write-Host "::notice::Python binding tests finished (exit $pyExit). Next: Node FFI (npm may run silently for several minutes)."
       if ($pyExit -ne 0) { throw "Python tests failed: $pyExit" }
@@ -153,7 +383,10 @@ Invoke-BindingSection "Python" {
   Write-BindLog "=== Python block finished; about to chdir to unittest\\include\\nodejs and run npm (no output is normal for several minutes on a cold run) ==="
   Write-Host "::notice::[seekdb-bind] If the log looks idle after Python passed, the job is almost certainly in Node npm (download) or a native dependency build, not in Python. Timestamps below are from the runner."
 }
+}
 
+if (-not (Test-BindSection 'NodeFfi')) { Write-BindLog "SKIP section NodeFfi (BindSection=$script:BindSectionMode)" }
+if (Test-BindSection 'NodeFfi') {
 Invoke-BindingSection "Node.js FFI (koffi)" {
   Push-Location (Join-Path $root "unittest\include\nodejs")
   try {
@@ -167,22 +400,17 @@ Invoke-BindingSection "Node.js FFI (koffi)" {
       Write-Host "::endgroup::"
     }
     if (Test-Path "seekdb.db") { Remove-Item -Recurse -Force "seekdb.db" }
-    Write-BindLog "Node FFI: running node test.js (relative db path)"
-    node test.js ".\seekdb.db" "test"
-    Write-BindLog "Node FFI: relative run exit=$LASTEXITCODE"
-    if ($LASTEXITCODE -ne 0) { throw "Node FFI tests (relative path) failed: $LASTEXITCODE" }
-    $absDb = Join-Path $PWD.Path "seekdb_abs.db"
-    if (Test-Path $absDb) { Remove-Item -Recurse -Force $absDb }
-    Write-BindLog "Node FFI: running node test.js (absolute db path)"
-    node test.js $absDb "test"
-    Write-BindLog "Node FFI: absolute run exit=$LASTEXITCODE"
-    if ($LASTEXITCODE -ne 0) { throw "Node FFI tests (absolute path) failed: $LASTEXITCODE" }
+    Write-BindLog "Node FFI: node test.js .\\seekdb.db (includes in-process absolute-path check)"
+    Invoke-NodeWithDeadline -NodeArgs @('test.js', '.\seekdb.db', 'test') -Description 'FFI test.js'
   }
   finally {
     Pop-Location
   }
 }
+}
 
+if (-not (Test-BindSection 'NodeNapi')) { Write-BindLog "SKIP section NodeNapi (BindSection=$script:BindSectionMode)" }
+if (Test-BindSection 'NodeNapi') {
 Invoke-BindingSection "Node.js N-API" {
   Push-Location (Join-Path $root "unittest\include\nodejs_napi")
   try {
@@ -196,22 +424,17 @@ Invoke-BindingSection "Node.js N-API" {
     Write-BindLog "N-API: node-gyp rebuild exit=$LASTEXITCODE"
     if ($LASTEXITCODE -ne 0) { throw "node-gyp rebuild failed: $LASTEXITCODE" }
     if (Test-Path "seekdb.db") { Remove-Item -Recurse -Force "seekdb.db" }
-    Write-BindLog "N-API: node test.js relative"
-    node test.js ".\seekdb.db" "test"
-    Write-BindLog "N-API: relative exit=$LASTEXITCODE"
-    if ($LASTEXITCODE -ne 0) { throw "Node N-API tests (relative path) failed: $LASTEXITCODE" }
-    $absDb = Join-Path $PWD.Path "seekdb_abs.db"
-    if (Test-Path $absDb) { Remove-Item -Recurse -Force $absDb }
-    Write-BindLog "N-API: node test.js absolute"
-    node test.js $absDb "test"
-    Write-BindLog "N-API: absolute exit=$LASTEXITCODE"
-    if ($LASTEXITCODE -ne 0) { throw "Node N-API tests (absolute path) failed: $LASTEXITCODE" }
+    Write-BindLog "N-API: node test.js .\\seekdb.db (includes in-process absolute-path check)"
+    Invoke-NodeWithDeadline -NodeArgs @('test.js', '.\seekdb.db', 'test') -Description 'N-API test.js'
   }
   finally {
     Pop-Location
   }
 }
+}
 
+if (-not (Test-BindSection 'Rust')) { Write-BindLog "SKIP section Rust (BindSection=$script:BindSectionMode)" }
+if (Test-BindSection 'Rust') {
 Invoke-BindingSection "Rust" {
   Push-Location (Join-Path $root "unittest\include\rust")
   try {
@@ -223,23 +446,18 @@ Invoke-BindingSection "Rust" {
     $exe = Join-Path $PWD.Path "target\debug\test.exe"
     if (-not (Test-Path $exe)) { throw "Rust test binary not found: $exe" }
     if (Test-Path "seekdb.db") { Remove-Item -Recurse -Force "seekdb.db" }
-    Write-BindLog "Rust: running test.exe relative"
-    & $exe ".\seekdb.db" "test"
-    Write-BindLog "Rust: relative exit=$LASTEXITCODE"
-    if ($LASTEXITCODE -ne 0) { throw "Rust tests (relative path) failed: $LASTEXITCODE" }
-    $absDb = Join-Path $PWD.Path "seekdb_abs.db"
-    if (Test-Path $absDb) { Remove-Item -Recurse -Force $absDb }
-    Write-BindLog "Rust: running test.exe absolute"
-    & $exe $absDb "test"
-    Write-BindLog "Rust: absolute exit=$LASTEXITCODE"
-    if ($LASTEXITCODE -ne 0) { throw "Rust tests (absolute path) failed: $LASTEXITCODE" }
+    Write-BindLog "Rust: test.exe .\\seekdb.db (includes in-process absolute-path check)"
+    Invoke-ExternalTestWithBindingExitProbe -FilePath $exe -ArgumentList @('.\seekdb.db', 'test') -Description 'Rust test.exe'
   }
   finally {
     Remove-Item Env:\RUSTFLAGS -ErrorAction SilentlyContinue
     Pop-Location
   }
 }
+}
 
+if (-not (Test-BindSection 'Go')) { Write-BindLog "SKIP section Go (BindSection=$script:BindSectionMode)" }
+if (Test-BindSection 'Go') {
 Invoke-BindingSection "Go" {
   if (-not (Get-Command gcc -ErrorAction SilentlyContinue)) {
     throw "gcc not found on PATH (required for Go CGO). Install MinGW (e.g. choco install mingw)."
@@ -247,22 +465,28 @@ Invoke-BindingSection "Go" {
   Push-Location (Join-Path $root "unittest\include\go")
   try {
     if (Test-Path "seekdb.db") { Remove-Item -Recurse -Force "seekdb.db" }
-    Write-BindLog "Go: go run relative"
-    go run test.go ".\seekdb.db"
-    Write-BindLog "Go: relative exit=$LASTEXITCODE"
-    if ($LASTEXITCODE -ne 0) { throw "Go tests (relative path) failed: $LASTEXITCODE" }
-    $absDb = Join-Path $PWD.Path "seekdb_abs.db"
-    if (Test-Path $absDb) { Remove-Item -Recurse -Force $absDb }
-    Write-BindLog "Go: go run absolute"
-    go run test.go $absDb
-    Write-BindLog "Go: absolute exit=$LASTEXITCODE"
-    if ($LASTEXITCODE -ne 0) { throw "Go tests (absolute path) failed: $LASTEXITCODE" }
+    # go run uses a different PID than the test process — exit probe must match Start-Process (build then run binary).
+    $goExe = (Get-Command go).Source
+    $goBin = Join-Path $env:TEMP "seekdb_go_binding_${PID}.exe"
+    Write-BindLog "Go: go build -> $goBin"
+    & $goExe build -o $goBin .
+    if ($LASTEXITCODE -ne 0) { throw "go build failed: $LASTEXITCODE" }
+    try {
+      Write-BindLog "Go: binding test .\\seekdb.db (includes in-process absolute-path check)"
+      Invoke-ExternalTestWithBindingExitProbe -FilePath $goBin -ArgumentList @('.\seekdb.db') -Description 'Go binding test'
+    }
+    finally {
+      Remove-Item -LiteralPath $goBin -Force -ErrorAction SilentlyContinue
+    }
   }
   finally {
     Pop-Location
   }
 }
+}
 
+if (-not (Test-BindSection 'Java')) { Write-BindLog "SKIP section Java (BindSection=$script:BindSectionMode)" }
+if (Test-BindSection 'Java') {
 Invoke-BindingSection "Java" {
   if (-not (Get-Command mvn -ErrorAction SilentlyContinue)) {
     throw "mvn not found on PATH (required for Java tests). Install Maven."
@@ -295,20 +519,19 @@ Invoke-BindingSection "Java" {
     if ($LASTEXITCODE -ne 0) { throw "mvn compile failed: $LASTEXITCODE" }
     $javaLibPath = "${jniDir};${libDir}"
     if (Test-Path "seekdb.db") { Remove-Item -Recurse -Force "seekdb.db" }
-    Write-BindLog "Java JNI: java SeekdbTest relative"
-    java "-Djava.library.path=$javaLibPath" -cp "target/classes;target/test-classes" seekdb.SeekdbTest ".\seekdb.db"
-    Write-BindLog "Java JNI: java relative exit=$LASTEXITCODE"
-    if ($LASTEXITCODE -ne 0) { throw "Java tests (relative path) failed: $LASTEXITCODE" }
-    $absDb = Join-Path $PWD.Path "seekdb_abs.db"
-    if (Test-Path $absDb) { Remove-Item -Recurse -Force $absDb }
-    Write-BindLog "Java JNI: java SeekdbTest absolute"
-    java "-Djava.library.path=$javaLibPath" -cp "target/classes;target/test-classes" seekdb.SeekdbTest $absDb
-    Write-BindLog "Java JNI: java absolute exit=$LASTEXITCODE"
-    if ($LASTEXITCODE -ne 0) { throw "Java tests (absolute path) failed: $LASTEXITCODE" }
+    $javaExe = Get-JavaExecutable
+    Write-BindLog "Java JNI: SeekdbTest .\\seekdb.db (includes in-process absolute-path check)"
+    Invoke-ExternalTestWithBindingExitProbe -FilePath $javaExe -ArgumentList @(
+      "-Djava.library.path=$javaLibPath",
+      '-cp', 'target/classes;target/test-classes',
+      'seekdb.SeekdbTest',
+      '.\seekdb.db'
+    ) -Description 'Java SeekdbTest'
   }
   finally {
     Pop-Location
   }
+}
 }
 
 Write-Host ""

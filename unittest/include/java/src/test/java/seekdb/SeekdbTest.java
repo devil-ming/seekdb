@@ -291,6 +291,26 @@ public class SeekdbTest {
         }
     }
 
+    private static void writeBindingExitProbe(int code) {
+        if (!"1".equals(System.getenv("SEEKDB_BINDING_EXIT_PROBE"))) {
+            return;
+        }
+        String tmp = System.getenv("TEMP");
+        if (tmp == null || tmp.isEmpty()) {
+            tmp = System.getProperty("java.io.tmpdir");
+        }
+        long pid = ProcessHandle.current().pid();
+        java.nio.file.Path p = java.nio.file.Paths.get(tmp, "seekdb_binding_exit_probe_" + pid + ".log");
+        try {
+            java.nio.file.Files.writeString(
+                    p,
+                    "before_process_exit code=" + code + System.lineSeparator(),
+                    java.nio.file.StandardOpenOption.CREATE,
+                    java.nio.file.StandardOpenOption.APPEND);
+        } catch (Exception ignored) {
+        }
+    }
+
     public static void main(String[] args) {
         System.out.println("=".repeat(70));
         System.out.println("SeekDB Java JNI Binding Test Suite");
@@ -303,6 +323,7 @@ public class SeekdbTest {
             Seekdb.open(dbDir);
         } catch (Exception e) {
             System.err.println("::error::Failed to open database: " + e.getMessage());
+            writeBindingExitProbe(1);
             System.exit(1);
         }
 
@@ -347,15 +368,32 @@ public class SeekdbTest {
         System.out.println("Total: " + passed + "/" + total + " passed, " + failed + " failed");
         System.out.println();
 
+        // Same-directory absolute open before close (aligned with python test.py).
+        if (passed == total) {
+            try {
+                java.nio.file.Path absSame = java.nio.file.Paths.get(dbDir).toAbsolutePath().normalize();
+                System.out.print("[TEST] Absolute path (same DB directory)               ... ");
+                Seekdb.open(absSame.toString());
+                System.out.println("PASS");
+            } catch (Exception e) {
+                System.out.println("FAIL");
+                System.err.println("::error::Absolute-path same-directory check failed: " + e.getMessage());
+                writeBindingExitProbe(1);
+                System.exit(1);
+            }
+        }
+
         Seekdb.close();
 
         if (passed == total) {
             System.out.println("::notice::All tests passed successfully!");
             System.out.println("=".repeat(70));
+            writeBindingExitProbe(0);
             System.exit(0);
         } else {
             System.err.println("::error::" + failed + " test(s) failed");
             System.out.println("=".repeat(70));
+            writeBindingExitProbe(1);
             System.exit(1);
         }
     }

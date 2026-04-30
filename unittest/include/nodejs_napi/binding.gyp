@@ -16,7 +16,7 @@
       "conditions": [
         ["OS!='win'", {
           "ldflags": [
-            "<!@(node -e \"const path = require('path'); const moduleRoot = '<(module_root_dir)'; const projectRoot = path.resolve(moduleRoot, '../../../'); const libPath = path.resolve(projectRoot, 'build_release/src/include'); console.log('-Wl,-rpath,' + libPath);\")"
+            "<!@(node -e \"const path = require('path'); const moduleRoot = process.cwd(); const projectRoot = path.resolve(moduleRoot, '../../../'); const libPath = path.resolve(projectRoot, 'build_release/src/include'); console.log('-Wl,-rpath,' + libPath);\")"
           ]
         }]
       ],
@@ -28,7 +28,7 @@
         "CLANG_CXX_LIBRARY": "libc++",
         "MACOSX_DEPLOYMENT_TARGET": "10.7",
         "OTHER_LDFLAGS": [
-          "<!@(node -e \"const path = require('path'); const fs = require('fs'); const moduleRoot = '<(module_root_dir)'; const projectRoot = path.resolve(moduleRoot, '../../../'); const libPath = path.resolve(projectRoot, 'build_release/src/include'); console.log('-Wl,-rpath,' + libPath);\")"
+          "<!@(node -e \"const path = require('path'); const moduleRoot = process.cwd(); const projectRoot = path.resolve(moduleRoot, '../../../'); const libPath = path.resolve(projectRoot, 'build_release/src/include'); console.log('-Wl,-rpath,' + libPath);\")"
         ]
       },
       "msvs_settings": {

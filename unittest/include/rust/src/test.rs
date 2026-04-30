@@ -12,6 +12,9 @@
 
 use seekdb::*;
 use std::env;
+use std::fs::OpenOptions;
+use std::io::Write;
+use std::path::Path;
 
 #[derive(Clone)]
 struct TestResult {
@@ -844,6 +847,24 @@ fn run_all_tests() -> i32 {
     println!("Total: {}/{} passed, {} failed", passed, total, failed);
     println!();
     
+    // Absolute path same directory (aligned with python test.py), before close — avoids second process on Windows CI.
+    if passed == total {
+        let abs_same = std::fs::canonicalize(Path::new(&db_dir))
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_else(|_| db_dir.clone());
+        print!("[TEST] {:<40} ... ", "Absolute path (same DB directory)");
+        std::io::Write::flush(&mut std::io::stdout()).unwrap();
+        match open(&abs_same) {
+            Ok(_) => println!("PASS"),
+            Err(e) => {
+                println!("FAIL");
+                eprintln!("::error::Absolute-path same-directory check failed: {:?}", e);
+                close();
+                return 1;
+            }
+        }
+    }
+    
     close();
     
     if passed == total {
@@ -857,6 +878,21 @@ fn run_all_tests() -> i32 {
     }
 }
 
+fn binding_exit_probe(code: i32) {
+    if env::var("SEEKDB_BINDING_EXIT_PROBE").ok().as_deref() != Some("1") {
+        return;
+    }
+    let pid = std::process::id();
+    let mut path = std::env::temp_dir();
+    path.push(format!("seekdb_binding_exit_probe_{}.log", pid));
+    if let Ok(mut f) = OpenOptions::new().create(true).append(true).open(&path) {
+        let _ = writeln!(f, "before_process_exit code={}", code);
+        let _ = f.sync_all();
+    }
+}
+
 fn main() {
-    std::process::exit(run_all_tests());
+    let code = run_all_tests();
+    binding_exit_probe(code);
+    std::process::exit(code);
 }
