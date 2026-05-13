@@ -147,10 +147,6 @@ namespace datadict
 {
   class ObDataDictService;
 }
-namespace archive
-{
-  class ObArchiveService;
-}
 namespace compaction
 {
   class ObTenantCompactionProgressMgr;
@@ -226,7 +222,6 @@ class ObChangeStreamMgr;
 namespace schema
 {
   class ObTenantSchemaService;
-  class ObStandbySchemaRefreshTrigger;
 }
 namespace detector
 {
@@ -331,11 +326,9 @@ using ObTableScanIteratorObjPool = common::ObServerObjectPool<oceanbase::storage
       sql::ObDataAccessService*,                     \
       sql::ObDASIDService*,                          \
       share::schema::ObTenantSchemaService*,         \
-      share::schema::ObStandbySchemaRefreshTrigger*, \
       storage::ObTenantFreezer*,                     \
       storage::checkpoint::ObCheckPointService *,    \
       storage::checkpoint::ObTabletGCService *,      \
-      archive::ObArchiveService*,                    \
       compaction::ObTenantTabletScheduler*,          \
       compaction::ObTenantMediumChecker*,            \
       storage::ObTenantCompactionMemPool*,           \
