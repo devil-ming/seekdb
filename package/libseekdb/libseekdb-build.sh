@@ -90,9 +90,9 @@ if [[ -z "${1:-}" ]]; then
     echo "[BUILD] Building libseekdb (BUILD_TYPE=$BUILD_TYPE)..."
     if [[ "$ANDROID_PACK" == true ]]; then
       if [[ ! -d "$BUILD_DIR" ]]; then
-        (cd "$TOP_DIR" && ./build.sh "$BUILD_TYPE" --android --init --make) || exit 1
+        (cd "$TOP_DIR" && ./build.sh "$BUILD_TYPE" --android --init -DBUILD_EMBED_MODE=ON --make) || exit 1
       else
-        (cd "$TOP_DIR" && ./build.sh "$BUILD_TYPE" --android --make) || exit 1
+        (cd "$TOP_DIR" && ./build.sh "$BUILD_TYPE" --android -DBUILD_EMBED_MODE=ON --make) || exit 1
       fi
       _j=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
       (cd "$BUILD_DIR" && make libseekdb -j"${_j}") || exit 1

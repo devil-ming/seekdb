@@ -370,7 +370,9 @@ void Thread::destroy_stack()
     stack_addr_ = nullptr;
   }
 #endif
+#ifndef _WIN32
   pth_ = 0;
+#endif
 }
 
 void* Thread::__th_start(void *arg)

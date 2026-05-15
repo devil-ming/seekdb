@@ -1443,6 +1443,9 @@ ob_set_subtarget(ob_sql session
 ob_add_new_object_target(ob_sql ob_sql)
 ob_add_new_object_target(ob_sql_extra ob_sql_extra)
 
+add_dependencies(ob_sql oblib_grpc)
+add_dependencies(ob_sql_extra oblib_grpc)
+
 if (DETECT_RECURSION)
  target_compile_options(ob_sql
    PRIVATE -finstrument-functions

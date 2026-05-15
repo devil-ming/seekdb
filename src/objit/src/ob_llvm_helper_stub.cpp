@@ -178,6 +178,12 @@ int64 ObLLVMHelper::get_pointer_type_id() { return 0; }
 int64 ObLLVMHelper::get_struct_type_id() { return 0; }
 int ObLLVMHelper::get_compiled_stack_size(uint64_t &) { return OB_NOT_SUPPORTED; }
 
+#ifdef _WIN32
+namespace core {
+uintptr_t ob_jit_get_personality_trampoline() { return 0; }
+} // namespace core
+#endif
+
 } // namespace jit
 } // namespace oceanbase
 
