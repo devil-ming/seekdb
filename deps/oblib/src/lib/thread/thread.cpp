@@ -124,7 +124,7 @@ int Thread::start()
       pret = pthread_attr_setstacksize(&attr, stack_size_);
       if (pret != 0) {
         // Fallback to default if setstacksize fails
-        pret = 0;
+        pret = 0; 
       } else {
         size_t actual_stack_size = 0;
         pthread_attr_getstacksize(&attr, &actual_stack_size);
@@ -362,17 +362,15 @@ void Thread::destroy()
 
 void Thread::destroy_stack()
 {
-#ifdef _WIN32
-  pth_ = pthread_null();
-#else
-#if !defined(OB_USE_ASAN)
+#if !defined(_WIN32) && !defined(OB_USE_ASAN)
   if (stack_addr_ != nullptr) {
     g_stack_allocer.dealloc(stack_addr_);
     stack_addr_ = nullptr;
   }
 #endif
-  pth_ = 0;
-#endif
+  // pthread_t is a struct on Windows (pthreads4w), an integer elsewhere;
+  // use pthread_null() so the same code compiles on every platform.
+  pth_ = pthread_null();
 }
 
 void* Thread::__th_start(void *arg)
