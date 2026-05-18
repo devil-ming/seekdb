@@ -411,7 +411,7 @@ public:
     } else {
       is_alloc_ = true;
       dli_buf_size_ = ddl_log->get_serialize_size();
-      submit_buf_ = static_cast<char *>(share::mtl_malloc(dli_buf_size_, "DLI_TMP_BUF")); 
+      submit_buf_ = static_cast<char *>(share::mtl_malloc(dli_buf_size_, "DLI_TMP_BUF"));
       int64_t pos = 0;
       if (OB_ISNULL(submit_buf_)) {
         ret = OB_ALLOCATE_MEMORY_FAILED;
@@ -1394,7 +1394,7 @@ public:
         free_buf_(buf_);
         buf_ = ptr;
         len_ = BIG_LOG_BUF_SIZE;
-      }  
+      }
     } else {
       ret = OB_ERR_UNEXPECTED;
     }
@@ -1641,5 +1641,3 @@ int ObTxLogBlock::add_new_log(T &tx_log_body, ObTxBigSegmentBuf *big_segment_buf
 } // namespace transaction
 } // namespace oceanbase
 #endif
-
-

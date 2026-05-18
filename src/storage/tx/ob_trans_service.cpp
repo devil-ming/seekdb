@@ -113,7 +113,7 @@ int ObTransService::init(const ObAddr &self,
              || OB_ISNULL(rpc_proxy)
              || OB_ISNULL(schema_service)) {
     TRANS_LOG(WARN, "invalid argument", K(self),
-              KP(location_adapter), KP(rpc), 
+              KP(location_adapter), KP(rpc),
               KP(location_adapter), KP(ts_mgr),
               KP(rpc_proxy), KP(schema_service));
     ret = OB_INVALID_ARGUMENT;
@@ -522,7 +522,7 @@ int ObTransService::register_mds_into_tx(ObTxDesc &tx_desc,
   tx_param.isolation_ = tx_desc.isolation_;
   tx_param.timeout_us_ = tx_desc.timeout_us_;
   ObTxSEQ savepoint;
-  
+
   if (OB_UNLIKELY(!tx_desc.is_valid() || !ls_id.is_valid() || type <= ObTxDataSourceType::UNKNOWN
                   || type >= ObTxDataSourceType::MAX_TYPE || OB_ISNULL(buf) || buf_len < 0)) {
     ret = OB_INVALID_ARGUMENT;

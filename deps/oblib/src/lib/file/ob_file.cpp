@@ -1643,4 +1643,3 @@ void ObFileAsyncAppender::wait()
 #endif // __USE_AIO_FILE
 }
 }
-

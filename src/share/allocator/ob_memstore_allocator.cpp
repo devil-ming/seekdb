@@ -25,7 +25,7 @@
 namespace oceanbase
 {
 using namespace share;
-namespace share 
+namespace share
 {
 int FrozenMemstoreInfoLogger::operator()(ObDLink* link)
 {

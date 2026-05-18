@@ -51,7 +51,7 @@ int OSDQTaskHandler::init(
   if (OB_UNLIKELY(is_inited_)) {
     ret = OB_INIT_TWICE;
     OB_LOG(WARN, "task handler init twice", KR(ret), K(is_inited_));
-  } else if (OB_ISNULL(base_uri) || OB_ISNULL(metric) || OB_ISNULL(storage_info) 
+  } else if (OB_ISNULL(base_uri) || OB_ISNULL(metric) || OB_ISNULL(storage_info)
       || OB_ISNULL(file_set) || OB_UNLIKELY(!storage_info->is_valid())) {
     ret = OB_INVALID_ARGUMENT;
     OB_LOG(WARN, "invalid argument", KR(ret), K(metric), KPC(storage_info), K(storage_info->is_valid()), K(file_set));
@@ -162,7 +162,7 @@ void OSDQTaskHandler::handle(void *task)
   if (OB_UNLIKELY(!is_inited_)) {
     ret = OB_NOT_INIT;
     OB_LOG(WARN, "task handler not init", KR(ret), K(is_inited_));
-  } else if (OB_ISNULL(task)) { 
+  } else if (OB_ISNULL(task)) {
     ret = OB_INVALID_ARGUMENT;
     OB_LOG(WARN, "invalid argument", KR(ret), K(task));
   } else if (FALSE_IT(task_p = reinterpret_cast<OSDQTask *>(task))) {
@@ -186,7 +186,7 @@ void OSDQTaskHandler::handle(void *task)
         OB_LOG(WARN, "failed handle del task", KR(ret), KPC(task_p));
       }
     } else {
-      ret = OB_ERR_UNEXPECTED;  
+      ret = OB_ERR_UNEXPECTED;
       OB_LOG(WARN, "invalid task op type", KR(ret), K(task_p->op_type_));
     }
 
@@ -237,7 +237,7 @@ int OSDQTaskHandler::handle_multipart_write_task_helper_(const OSDQTask *task)
   if (OB_FAIL(adapter_.open_with_access_type(device_handle, fd, storage_info_, task->uri_,
           access_type, ObStorageIdMod::get_default_id_mod()))) {
     OB_LOG(WARN, "failed to open device with access type", KR(ret), KPC(task));
-  } 
+  }
   std::vector<ObIOHandle> io_handles(PART_COUNTS);
   for (int i = 0; i < PART_COUNTS && OB_SUCC(ret); i++) {
     const int64_t START_POS = i * PART_SIZE;
@@ -271,7 +271,7 @@ int OSDQTaskHandler::handle_append_write_task_helper_(const OSDQTask *task)
   const int64_t buf_len = task->buf_len_;
   const int64_t write_cnt = 4;
   const int64_t write_size_once = buf_len / write_cnt;
-  const ObStorageAccessType access_type = OB_STORAGE_ACCESS_APPENDER; 
+  const ObStorageAccessType access_type = OB_STORAGE_ACCESS_APPENDER;
   int64_t write_size = 0;
   for (int i = 0; i < write_cnt && OB_SUCC(ret); i++) {
     const int64_t offset = write_size_once * i;
@@ -290,14 +290,14 @@ int OSDQTaskHandler::handle_append_write_task_helper_(const OSDQTask *task)
 }
 
 bool OSDQTaskHandler::check_parallel_write_result_(
-    const OSDQOpType op_type1, 
-    const int ret1, 
-    const OSDQOpType op_type2, 
+    const OSDQOpType op_type1,
+    const int ret1,
+    const OSDQOpType op_type2,
     const int ret2)
 {
   bool bool_ret = true;
   int ret = OB_SUCCESS;
-  if ((op_type1 == WRITE_SINGLE_FILE || op_type1 == MULTIPART_WRITE) 
+  if ((op_type1 == WRITE_SINGLE_FILE || op_type1 == MULTIPART_WRITE)
       && (op_type2 == WRITE_SINGLE_FILE || op_type2 == MULTIPART_WRITE)) {
     // in this case, no operation is append write
     if (OB_UNLIKELY(ret1 != OB_SUCCESS || ret2 != OB_SUCCESS)) {
@@ -320,7 +320,7 @@ bool OSDQTaskHandler::check_parallel_write_result_(
 
 void OSDQTaskHandler::push_req_result_(const int ret)
 {
-  lib::ObMutexGuard guard(mutex_);  
+  lib::ObMutexGuard guard(mutex_);
   req_results_.push_back(ret);
 }
 
@@ -343,7 +343,7 @@ void OSDQTaskHandler::handle_drop(void *task)
   }
 }
 
-int OSDQTaskHandler::push_task(OSDQTask *task) 
+int OSDQTaskHandler::push_task(OSDQTask *task)
 {
   int ret = OB_SUCCESS;
   if (OB_UNLIKELY(!is_inited_)) {
@@ -357,7 +357,7 @@ int OSDQTaskHandler::push_task(OSDQTask *task)
   } else if (OB_FAIL(TG_PUSH_TASK(tg_id_, task))) {
     OB_LOG(WARN, "failed push task in task handler", KR(ret), KPC(task));
   } else if (OB_FAIL(metric_->add_queued_entry())){
-    OB_LOG(WARN, "failed add queued entry in metric", KR(ret)); 
+    OB_LOG(WARN, "failed add queued entry in metric", KR(ret));
   }
   return ret;
 }
@@ -377,7 +377,7 @@ int OSDQTaskHandler::set_operator_weight(const OSDQOpType op_type, const int64_t
   return ret;
 }
 
-int OSDQTaskHandler::set_prob_of_writing_old_data(const int64_t prob) 
+int OSDQTaskHandler::set_prob_of_writing_old_data(const int64_t prob)
 {
   int ret = OB_SUCCESS;
   if (OB_UNLIKELY(prob < 0 || prob >= 100)) {
@@ -389,7 +389,7 @@ int OSDQTaskHandler::set_prob_of_writing_old_data(const int64_t prob)
   return ret;
 }
 
-int OSDQTaskHandler::set_prob_of_parallel(const int64_t prob) 
+int OSDQTaskHandler::set_prob_of_parallel(const int64_t prob)
 {
   int ret = OB_SUCCESS;
   if (OB_UNLIKELY(prob < 0 || prob >= 100)) {
@@ -449,13 +449,13 @@ int OSDQTaskHandler::gen_write_task(OSDQTask *task, const OSDQOpType op_type)
   if (OB_UNLIKELY(!is_inited_)) {
     ret = OB_NOT_INIT;
     OB_LOG(WARN, "not init", KR(ret), K(is_inited_));
-  } else if (OB_ISNULL(task) || OB_UNLIKELY(op_type != WRITE_SINGLE_FILE 
+  } else if (OB_ISNULL(task) || OB_UNLIKELY(op_type != WRITE_SINGLE_FILE
              && op_type != MULTIPART_WRITE && op_type != APPEND_WRITE)) {
     ret = OB_INVALID_ARGUMENT;
     OB_LOG(WARN, "invalid argument", KR(ret), K(task), K(op_type));
   } else {
-    // random choosing whether to write a new file or an old one 
-    // 20% chance of writing old files 
+    // random choosing whether to write a new file or an old one
+    // 20% chance of writing old files
     bool is_write_new = true;
     int rnd = ObRandom::rand(0, 100);
     if (rnd <= prob_of_writing_old_data_ && file_set_->size() != 0) {
@@ -489,13 +489,13 @@ int OSDQTaskHandler::gen_write_task(OSDQTask *task, const OSDQOpType op_type)
         OB_LOG(WARN, "failed allocate memory for task buf", KR(ret), K(task->buf_len_));
       } else if (OB_FAIL(generate_content_by_object_id(task->buf_, task->buf_len_, object_id))) {
         OB_LOG(WARN, "failed to generate content for task", KR(ret), K(task->buf_len_), K(object_id));
-      } 
-    } 
+      }
+    }
 
     if (OB_SUCC(ret)) {
       task->op_type_ = op_type;
       task->object_id_ = object_id;
-      // random choosing whether to parallel or not 
+      // random choosing whether to parallel or not
       rnd = ObRandom::rand(1, 100);
       if (rnd <= prob_of_parallel_) {
         task->parallel_ = true;
@@ -507,7 +507,7 @@ int OSDQTaskHandler::gen_write_task(OSDQTask *task, const OSDQOpType op_type)
         int parallel_op_type_nums = sizeof(parallel_op_types) / sizeof(OSDQOpType);
         // if buf_len_ is less than 4, the append task cannot be executed
         if (task->buf_len_ < 4) {
-          parallel_op_type_nums--; 
+          parallel_op_type_nums--;
         }
         rnd = ObRandom::rand(0, parallel_op_type_nums - 1);
         task->parallel_op_type_ = static_cast<OSDQOpType>(rnd);
@@ -571,7 +571,7 @@ std::packaged_task<int()> OSDQTaskHandler::get_packaged_task_(OSDQOpType op_type
   }
 }
 
-int OSDQTaskHandler::handle_write_task(const OSDQTask *task) 
+int OSDQTaskHandler::handle_write_task(const OSDQTask *task)
 {
   int ret = OB_SUCCESS;
   if (OB_UNLIKELY(!is_inited_)) {
@@ -593,11 +593,11 @@ int OSDQTaskHandler::handle_write_task(const OSDQTask *task)
       } else if (task->op_type_ == APPEND_WRITE
           && OB_FAIL(handle_append_write_task_helper_(task))) {
         OB_LOG(WARN, "failed handle append write task", KR(ret), KPC(task));
-      } 
+      }
 
       if (FAILEDx(metric_->add_latency_metric(op_start_time_us,
               task->op_type_, task->buf_len_))) {
-        OB_LOG(WARN, "failed add latency metric", KR(ret), K(op_start_time_us), KPC(task)); 
+        OB_LOG(WARN, "failed add latency metric", KR(ret), K(op_start_time_us), KPC(task));
       } else if (OB_FAIL(file_set_->add_file(task->object_id_, task->uri_))) {
         OB_LOG(WARN, "failed add object id and file path in file set", KR(ret), KPC(task));
       }
@@ -605,7 +605,7 @@ int OSDQTaskHandler::handle_write_task(const OSDQTask *task)
       //parallel write
       std::packaged_task<int()> task1 = get_packaged_task_(task->op_type_, task);
       std::packaged_task<int()> task2 = get_packaged_task_(task->parallel_op_type_, task);
-      
+
       std::future<int> future1 = task1.get_future();
       std::future<int> future2 = task2.get_future();
       std::thread th1(std::move(task1));
@@ -619,9 +619,9 @@ int OSDQTaskHandler::handle_write_task(const OSDQTask *task)
       if (OB_UNLIKELY(!check_parallel_write_result_(task->op_type_, ret1, task->parallel_op_type_, ret2))) {
        OSDQLogEntry log;
        log.init("PARALLEL WRITE FAILED", RED_COLOR_PREFIX);
-       log.log_entry(std::string(osdq_op_type_names[task->op_type_]) 
+       log.log_entry(std::string(osdq_op_type_names[task->op_type_])
            + ": " + std::to_string(ret1) + " " + std::string(ob_error_name(ret1)));
-       log.log_entry(std::string(osdq_op_type_names[task->parallel_op_type_]) 
+       log.log_entry(std::string(osdq_op_type_names[task->parallel_op_type_])
            + ": " + std::to_string(ret2) + " " + std::string(ob_error_name(ret2)));
        log.print();
       } else {
@@ -649,7 +649,7 @@ int OSDQTaskHandler::handle_read_single_task(OSDQTask *task)
         OB_LOG(WARN, "failed handle read single task", KR(ret));
       }  else if (OB_FAIL(metric_->add_latency_metric(op_start_time_us,
               task->op_type_, task->buf_len_))) {
-        OB_LOG(WARN, "failed add latency metric", KR(ret), K(op_start_time_us), KPC(task)); 
+        OB_LOG(WARN, "failed add latency metric", KR(ret), K(op_start_time_us), KPC(task));
       } else if (OB_FAIL(file_set_->add_file(task->object_id_, task->uri_))) {
         OB_LOG(WARN, "failed add object id and file path in file set", KR(ret), KPC(task));
       }
@@ -658,7 +658,7 @@ int OSDQTaskHandler::handle_read_single_task(OSDQTask *task)
       std::packaged_task<int(OSDQTask *task)> helper2(std::bind(&OSDQTaskHandler::handle_read_single_task_helper_, this, std::placeholders::_1));
       std::future<int> future_obj1 = helper1.get_future();
       std::future<int> future_obj2 = helper2.get_future();
-      
+
       OSDQTask *task2 = nullptr;
       if (OB_ISNULL(task2 = static_cast<OSDQTask *>(malloc(sizeof(OSDQTask))))) {
         ret = OB_ALLOCATE_MEMORY_FAILED;
@@ -684,7 +684,7 @@ int OSDQTaskHandler::handle_read_single_task(OSDQTask *task)
         int ret2 = future_obj2.get();
         if (OB_UNLIKELY(ret1 != OB_SUCCESS || ret2 != OB_SUCCESS)) {
           ret = OB_ERR_UNEXPECTED;
-          OB_LOG(WARN, "failed parallel read single task", KR(ret), KR(ret1), KR(ret2));  
+          OB_LOG(WARN, "failed parallel read single task", KR(ret), KR(ret1), KR(ret2));
         }
       }
 
@@ -708,7 +708,7 @@ int OSDQTaskHandler::handle_read_single_task_helper_(OSDQTask *task)
   } else if (OB_FAIL(adapter_.adaptively_read_single_file(task->uri_, storage_info_, task->buf_,
           task->buf_len_, read_size, ObStorageIdMod::get_default_id_mod()))) {
     OB_LOG(WARN, "failed read single file", KR(ret), KPC(task), KPC(storage_info_));
-  } 
+  }
   return ret;
 }
 

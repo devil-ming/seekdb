@@ -76,7 +76,7 @@ TEST_F(TestFdSimulator, test_fd)
   ASSERT_TRUE(NULL != fds);
   ctx = fds;
   for (int i = 0; i < test_1_num + test_2_num; i++) {
-    device_type = i % 5; 
+    device_type = i % 5;
     device_flag = i % 2;
     ASSERT_EQ(OB_SUCCESS, fd_sim.get_fd(ctx, device_type, device_flag, fds[i]));
     ObFdSimulator::get_fd_device_type(fds[i], tmp_device_type);
@@ -92,7 +92,7 @@ TEST_F(TestFdSimulator, test_fd)
     }
     fd_sim.fd_to_ctx(fds[i], tmp_ctx);
     ASSERT_EQ(tmp_ctx, ctx);
-  } 
+  }
   //release some fd(relase the fd which fd_id %3 == 0)
   for (int i = 0; i < test_1_num + test_2_num; i++) {
     if (i % 3 == 0) {
@@ -164,7 +164,7 @@ TEST_F(TestDeviceManager, test_device_manager)
   ObString storage_prefix_local(OB_LOCAL_PREFIX);
   manager.destroy();
   ASSERT_EQ(OB_SUCCESS, manager.init_devices_env());
-  
+
   int32_t device_num = 0;
   int32_t device_map_cnt = 0;
   ObIODevice* tmp_dev_handle = NULL;
@@ -203,7 +203,7 @@ TEST_F(TestDeviceManager, test_device_manager)
     ObStorageIdMod tmp_storage_id_mod(i, ObStorageUsedMod::STORAGE_USED_DATA);
     ASSERT_EQ(OB_SUCCESS, manager.get_device(storage_prefix_local, tmp_storage_info,
                                              tmp_storage_id_mod, device_handle[i]));
-    //all the device is not same 
+    //all the device is not same
     if (NULL != tmp_dev_handle) {
       // ASSERT_TRUE(device_handle[i] != tmp_dev_handle);
     }
@@ -211,7 +211,7 @@ TEST_F(TestDeviceManager, test_device_manager)
   }
   device_num = manager.get_device_cnt();
   ASSERT_EQ(max_dev_num, device_num);
-   
+
   //exceed MAX_DEVICE_INSTANCE device, should fail
   ObObjectStorageInfo max_storage_info;
   max_storage_info.device_type_ = ObStorageType::OB_STORAGE_AZBLOB;
@@ -238,7 +238,7 @@ TEST_F(TestDeviceManager, test_device_manager)
   //double release scenario, since the ref is 0, can not release again
   ASSERT_EQ(OB_INVALID_ARGUMENT, manager.release_device(tmp_dev_handle));
   //the device handle has been reset, so will be a null pointer error
-  ASSERT_EQ(OB_INVALID_ARGUMENT, manager.release_device(device_handle[0]));               
+  ASSERT_EQ(OB_INVALID_ARGUMENT, manager.release_device(device_handle[0]));
   ASSERT_EQ(OB_SUCCESS, manager.get_device(storage_prefix_local, max_storage_info,
                                            max_storage_id_mod, device_handle[0]));
   device_num = manager.get_device_cnt();
@@ -254,7 +254,7 @@ TEST_F(TestDeviceManager, test_device_manager)
     if ( i >= max_dev_num/2) {
       storage_id = i;
     }
-    
+
     ObObjectStorageInfo tmp_storage_info;
     tmp_storage_info.device_type_ = ObStorageType::OB_STORAGE_AZBLOB;
     ASSERT_EQ(OB_SUCCESS, databuff_printf(tmp_storage_info.access_id_,

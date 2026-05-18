@@ -163,9 +163,9 @@ public:
 public:
   ObITable::TableType get_merged_table_type() const;
   void prepare_table_schema(
-      const char **micro_data, 
-      const int64_t schema_rowkey_cnt, 
-      const ObScnRange &scn_range, 
+      const char **micro_data,
+      const int64_t schema_rowkey_cnt,
+      const ObScnRange &scn_range,
       const int64_t snapshot_version,
       const ObMergeEngineType merge_engine_type = ObMergeEngineType::OB_MERGE_ENGINE_PARTIAL_UPDATE);
   void init_tablet();

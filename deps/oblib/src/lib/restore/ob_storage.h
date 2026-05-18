@@ -83,7 +83,7 @@ public:
   // not thread safe
   static ObStorageGlobalIns& get_instance();
 
-  
+
   // When the observer is in not in white list, no matter read or write io is not allowed.
 
   bool is_io_prohibited() const;
@@ -92,17 +92,17 @@ private:
   bool io_prohibited_;
 };
 
-enum ObAppendStrategy 
+enum ObAppendStrategy
 {
   // Each write will be done by the following operations:
   // 1. read the whole object
   // 2. write with previously read data as a newer object
   OB_APPEND_USE_OVERRITE = 0,
-  // Append data to the tail of the object with specific offset. The write 
+  // Append data to the tail of the object with specific offset. The write
   // will be done only if actual tail is equal to the input offset. Otherwise,
   // return failed.
   OB_APPEND_USE_APPEND = 1,
-  // In this case, the object is a logical one which is actually composed of several 
+  // In this case, the object is a logical one which is actually composed of several
   // pythysical subobject. A number will be given for each write to format the name of
   // the subobject combined with the logical object name.
   OB_APPEND_USE_SLICE_PUT = 2,
@@ -123,7 +123,7 @@ struct ObStorageObjectVersionParam {
 class ListAppendableObjectFragmentOp : public common::ObBaseDirEntryOperator
 {
 public:
-  ListAppendableObjectFragmentOp(const bool need_size = true) 
+  ListAppendableObjectFragmentOp(const bool need_size = true)
     : exist_format_meta_(false), exist_seal_meta_(false), meta_arr_(), need_size_(need_size) {}
 
   virtual ~ListAppendableObjectFragmentOp() { meta_arr_.reset(); }
@@ -199,7 +199,7 @@ public:
     int get_error_code();
   };
 
-private: 
+private:
   int alloc_and_init_(const char *d_name, Entry &out_entry);
   void free_memory_(Entry &out_entry);
   int try_replace_top_(const char *d_name);
@@ -252,10 +252,10 @@ public:
    * of the objects that failed to delete.
    *
    * It's important to ensure that all the objects provided for deletion are located
-   * on the same destination. If the destination is object storage, all objects must be 
+   * on the same destination. If the destination is object storage, all objects must be
    * within the same bucket.
    *
-   * Due to the absence of a batch tagging interface, if delete mode 'tagging' is set 
+   * Due to the absence of a batch tagging interface, if delete mode 'tagging' is set
    * when initiating the utility, it will switch to a looped tagging operation.
    *
    * As NFS does not offer a batch deleting interface, and GCS's batch delete interface
@@ -273,19 +273,19 @@ public:
   int del_unmerged_parts(const common::ObString &uri);
 
   // For one object, if given us the uri(no matter in s3), we can't tell the type of this object.
-  // It may be a 'single、normal' object. Or it may be a 's3-appendable-object'(like a dir), containing several 
+  // It may be a 'single、normal' object. Or it may be a 's3-appendable-object'(like a dir), containing several
   // 'single、normal' objects.
   // So, this function is for checking the object meta, to get its meta info
-  // 
+  //
   // @uri, the object full path in object storage.
   // @is_adaptive, if FALSE, means it is a normal object absolutely.
   //               if TRUE, means we don't know it type. We need to check its real type.
-  // @need_fragment_meta, if TRUE and the type is a 's3-appendable-object', we need to get its child objects meta. 
-  //                      for example, when using adaptive reader, this param will set as TRUE; when using is_exist(), 
+  // @need_fragment_meta, if TRUE and the type is a 's3-appendable-object', we need to get its child objects meta.
+  //                      for example, when using adaptive reader, this param will set as TRUE; when using is_exist(),
   //                      this param will set as FALSE
-  // @obj_meta the result, which saves the meta info of this object. If the target object not exists, we can check 
-  //           obj_meta.is_exist_, not return OB_OBJECT_NOT_EXIST.   
-  int detect_storage_obj_meta(const common::ObString &uri, const bool is_adaptive, 
+  // @obj_meta the result, which saves the meta info of this object. If the target object not exists, we can check
+  //           obj_meta.is_exist_, not return OB_OBJECT_NOT_EXIST.
+  int detect_storage_obj_meta(const common::ObString &uri, const bool is_adaptive,
                               const bool need_fragment_meta, ObStorageObjectMeta &obj_meta);
 
   // Due to the 'SIMULATE_APPEND' object and 'NORMAL' object may exist together, thus we can't simply list all objects
@@ -326,9 +326,9 @@ private:
   // NOTICE: children objects of 'appendable-dir' all have the same prefix(OB_ADAPTIVELY_APPENDABLE_FRAGMENT_PREFIXT_PREFIX).
   //         If there exists some children objects not have this prefix, these objects will also be listed.
   //         Cuz we think these objects are just some common objects.
-  // 
+  //
   // If op.is_marker_scan() is True:
-  // list objects under the directory 'uri' that are lexicographically greater than 'marker', 
+  // list objects under the directory 'uri' that are lexicographically greater than 'marker',
   // and the number of objects returned does not exceed op.get_scan_count()
   // If 'marker' is "", it means the listing starts from the lexicographically smallest object in the 'dir_name' directory
   // If op.get_scan_count() is <= 0, it indicates there is no upper limit on the number of objects listed
@@ -336,13 +336,13 @@ private:
   // 'marker' is unsed
   int list_adaptive_files(const common::ObString &uri, common::ObBaseDirEntryOperator &op);
   // ObjectStorage and Filesystem need to handle seperately.
-  int handle_listed_objs(ObStorageListCtxBase *ctx_base, const common::ObString &uri, 
+  int handle_listed_objs(ObStorageListCtxBase *ctx_base, const common::ObString &uri,
                          const common::ObString &dir_path, common::ObBaseDirEntryOperator &op);
   int handle_listed_appendable_obj(ObStorageListObjectsCtx *list_ctx, const common::ObString &uri,
                                    const common::ObString &dir_path, common::ObBaseDirEntryOperator &op);
-  int handle_listed_fs(ObStorageListCtxBase *ctx_base, const common::ObString &uri, 
+  int handle_listed_fs(ObStorageListCtxBase *ctx_base, const common::ObString &uri,
                        const common::ObString &dir_path, common::ObBaseDirEntryOperator &op);
-  
+
   // For 'SIMULATE_APPEND' type file, if we want to get its file length, we can't get its length from object meta directly.
   // <1> First, we need to check if there exists SEAL_META, if exists, read its content and get the file length
   // <2> If not exists, we need to list all its children objects and get the file length
@@ -481,7 +481,7 @@ public:
   ObStorageAppender();
   virtual ~ObStorageAppender();
 
-  struct AppenderParam 
+  struct AppenderParam
   {
     ObAppendStrategy strategy_;
     ObStorageObjectVersionParam version_param_;
@@ -557,13 +557,13 @@ protected:
 private:
   DISALLOW_COPY_AND_ASSIGN(ObStorageParallelMultiPartWriterBase);
 };
- 
+
 /*
- * Design doc: 
- * 
+ * Design doc:
+ *
  * Note: When using the following parallel multipart upload interfaces, only the data upload process
- * is conducted in parallel. As such, only the methods `get_length`, `upload_part`, 
- * `buf_append_part`, and `get_part_id` may be invoked concurrently 
+ * is conducted in parallel. As such, only the methods `get_length`, `upload_part`,
+ * `buf_append_part`, and `get_part_id` may be invoked concurrently
  * and therefore require parallelization.
  */
 
@@ -576,7 +576,7 @@ public:
   ObStorageDirectMultiPartWriter();
   virtual ~ObStorageDirectMultiPartWriter();
   virtual void reset() override;
-  
+
   virtual int open(const ObString &uri, ObObjectStorageInfo *storage_info) override;
   virtual int upload_part(const char *buf, const int64_t size, const int64_t part_id);
   int complete();

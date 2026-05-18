@@ -128,7 +128,7 @@ int ObServerLogBlockMgr::init(const char *log_disk_base_path)
     CLOG_LOG(ERROR, "do_load_ failed", K(ret), KPC(this), K(log_disk_base_path));
   } else {
     get_tenants_log_disk_size_func_ = [this](int64_t &log_disk_size) -> int
-    { 
+    {
       log_disk_size = 0;
       return get_all_tenants_log_disk_size_(log_disk_size);
     };

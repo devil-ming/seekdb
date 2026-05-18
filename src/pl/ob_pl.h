@@ -514,7 +514,7 @@ public:
   * some package subprogram has special invoker right, though the package may have definer privs
   * for example: dbms_utility package is definer privs, but some function such as
   * name_resolve must be run as current_user, oracle do it in interface functions
-  * see: 
+  * see:
   * we hacked it using name compared, for the interface funtion can't get the origin db name and id
   * test -> oceanbase, we see oceanbase in interface but can't see test.
   */
@@ -807,7 +807,7 @@ public:
   {
     dwarf_helper_ = dwarf_helper;
   }
-  inline jit::ObDWARFHelper* get_dwarf_helper() { return dwarf_helper_; } 
+  inline jit::ObDWARFHelper* get_dwarf_helper() { return dwarf_helper_; }
 
   inline void add_pure_sql_exec_time(int64_t sql_exec_time)
   {
@@ -875,7 +875,7 @@ class ObPLContext
 {
   friend class LinkPLStackGuard;
 public:
-  ObPLContext() 
+  ObPLContext()
       { reset(); }
   virtual ~ObPLContext() { reset(); }
   void reset()
@@ -1247,7 +1247,7 @@ public:
 
   static int simple_execute(ObPLExecCtx *ctx, int64_t argc, int64_t *argv);
   static int interface_execute(ObPLExecCtx *ctx, int64_t argc, int64_t *argv);
-  
+
   static int check_trigger_arg(ParamStore &params, const ObPLFunction &func, ObPLContext &pl_ctx, ObExecContext &ctx);
 
   std::pair<common::ObBucketLock, common::ObBucketLock>& get_jit_lock() { return jit_lock_; }

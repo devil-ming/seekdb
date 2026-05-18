@@ -77,7 +77,7 @@ TEST_F(TestIndexUsageInfo, test_init)
 
   ASSERT_EQ(nullptr, mgr.report_task_.get_mgr());
   ASSERT_EQ(nullptr, mgr.report_task_.get_sql_proxy());
-  
+
   ASSERT_TRUE(mgr_.is_inited_);
   ASSERT_TRUE(mgr_.report_task_.get_is_inited());
   ASSERT_TRUE(mgr_.refresh_conf_task_.get_is_inited());

@@ -40,10 +40,10 @@ int ObTenantStsCredentialMgr::get_sts_credential(
   } else if (OB_UNLIKELY(!is_valid_tenant_id(tenant_id) || is_virtual_tenant_id(tenant_id))) {
     // If the tenant is invalid or illegal, the sts_credential of the system tenant will be used as
     // a backup. Please refer to the following document for specific reasons.
-    // 
+    //
     tenant_id = OB_SYS_TENANT_ID;
     OB_LOG(WARN, "invalid tenant ctx, use sys tenant", K(ret), K(tenant_id));
-  } 
+  }
   if (OB_SUCC(ret)) {
     if (is_meta_tenant(tenant_id)) {
       tenant_id = gen_user_tenant_id(tenant_id);

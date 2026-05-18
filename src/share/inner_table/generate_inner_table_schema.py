@@ -205,7 +205,7 @@ def print_default_column(column_name, rowkey_id, index_id, part_key_pos, column_
       {12}_default,
       {12}_default, //default_value
       {14}, //is_hidden
-      {15}); //is_storing_column 
+      {15}); //is_storing_column
   }}
 """
       cpp_f.write(line.format(column_name, column_id, rowkey_id, index_id, part_key_pos, column_type, column_collation_type, column_length, column_precision, column_scale, is_nullable, is_autoincrement, column_name.lower(), set_op, is_hidden, is_storing_column))
@@ -279,7 +279,7 @@ def print_default_column(column_name, rowkey_id, index_id, part_key_pos, column_
   }}
 """
       cpp_f.write(line.format(column_name, rowkey_id, index_id, part_key_pos, column_type, column_collation_type, column_length, column_precision, column_scale, is_nullable, is_autoincrement, column_name.lower(),set_op))
-    
+
 def print_column(column_name, rowkey_id, index_id, part_key_pos, column_type, column_collation_type, column_length, column_precision, column_scale, is_nullable, is_autoincrement, column_id, is_hidden, is_storing_column):
   global cpp_f
 
@@ -321,7 +321,7 @@ def print_column(column_name, rowkey_id, index_id, part_key_pos, column_type, co
       {9}, //is_nullable
       {10},//is_autoincrement
       {11},//is_hidden
-      {12});//is_storing_column 
+      {12});//is_storing_column
   }}
 """
       cpp_f.write(line.format(column_name, rowkey_id, index_id, part_key_pos, column_type, column_collation_type, column_length, column_precision, column_scale, is_nullable, is_autoincrement,is_hidden ,is_storing_column))
@@ -364,7 +364,7 @@ def print_column(column_name, rowkey_id, index_id, part_key_pos, column_type, co
 """
       cpp_f.write(line.format(column_name, rowkey_id, index_id, part_key_pos, column_type, column_collation_type, column_length, column_precision, column_scale, is_nullable, is_autoincrement))
 
-    
+
 def print_discard_column(column_name):
   global cpp_f
   line = """
@@ -426,7 +426,7 @@ def print_timestamp_column(column_name, rowkey_id, index_id, part_key_pos, colum
       {11}, //is_autoincrement
       {12}, //is_on_update_for_timestamp
       {13}, //is_hidden
-      {14});//is_storing_column 
+      {14});//is_storing_column
   }}
 """
       cpp_f.write(line.format(column_name, column_id, rowkey_id, index_id, part_key_pos, column_type, column_collation_type, column_length, column_precision, column_scale, is_nullable, is_autoincrement, is_on_update_for_timestamp,is_hidden, is_storing_column))
@@ -475,7 +475,7 @@ def print_timestamp_column(column_name, rowkey_id, index_id, part_key_pos, colum
       {10}, //is_autoincrement
       {11}, //is_on_update_for_timestamp
       {12}, //is_hidden
-      {13});//is_storing_column 
+      {13});//is_storing_column
   }}
 """
       cpp_f.write(line.format(column_name, rowkey_id, index_id, part_key_pos, column_type, column_collation_type, column_length, column_precision, column_scale, is_nullable, is_autoincrement, is_on_update_for_timestamp, is_hidden, is_storing_column))
@@ -2332,7 +2332,7 @@ def generate_virtual_agent_misc_data(f):
     only_sys = base_kw['table_name'] in all_only_sys_table_name and all_only_sys_table_name[base_kw['table_name']] and "OB_SYS_DATABASE_ID" != kw['database_id']
     mysql_compat_agent_table_name = base_kw['table_name']
     mysql_compat_agent = (mysql_compat_agent_table_name in mysql_compat_agent_tables
-                          and mysql_compat_agent_tables[mysql_compat_agent_table_name] 
+                          and mysql_compat_agent_tables[mysql_compat_agent_table_name]
                           and "OB_SYS_DATABASE_ID" == kw['database_id'])
     iter_init += """
     case %s: {
@@ -2351,7 +2351,7 @@ def generate_virtual_agent_misc_data(f):
        vt_iter = agent_iter;
       }
       break;
-    }\n""" % (tid, base_tid, in_tenant_space and 'false' or 'true', only_sys and 'true' or 'false', 
+    }\n""" % (tid, base_tid, in_tenant_space and 'false' or 'true', only_sys and 'true' or 'false',
               ', Worker::CompatMode::MYSQL' if mysql_compat_agent else '')
 
   iter_init += '  END_CREATE_VT_ITER_SWITCH_LAMBDA\n'
@@ -2420,7 +2420,7 @@ def def_agent_index_table(index_name, index_table_id, index_columns, index_using
     raise Exception("index name mismatch", index_kw['index_name'], real_index_name)
   if not index_kw['index_columns'] == index_columns:
     raise Exception("index column mismatch", index_kw['index_columns'], index_columns)
-  
+
 
   index_def = ''
   cpp_f_tmp = cpp_f
@@ -2443,9 +2443,9 @@ def def_agent_index_table(index_name, index_table_id, index_columns, index_using
   kw["real_vt"] = True
   real_table_virtual_table_names.append(kw)
 
-  #In order to upgrade compatibility, 
-  #the oracle inner table index cannot be added to the schema of the main table following the path of the main table. 
-  #Only the schema refresh triggered by the creation of the index table can add simple index info, 
+  #In order to upgrade compatibility,
+  #the oracle inner table index cannot be added to the schema of the main table following the path of the main table.
+  #Only the schema refresh triggered by the creation of the index table can add simple index info,
   #so the agent table index is not added to the sys index here
 
   #sys_index_tables.append(kw)
@@ -2838,8 +2838,8 @@ def kw2tid(kw):
   else:
     return table_name2tid(kw['table_name']+ name_postfix)
 
-__current_range_idx = -1 
-__def_cnt = 0 
+__current_range_idx = -1
+__def_cnt = 0
 __split_size = 50
 def check_split_file(tid):
   global __current_range_idx
@@ -3165,7 +3165,7 @@ def def_table_schema(**keywords):
     lob_aux_ids.append([keywords['table_id'], keywords['table_name'], piece_tid, 'AUX_LOB_PIECE', lob_aux_data_def, is_in_tenant_space, cluster_private])
     ptid = table_name2tid(keywords['table_name'] + '_aux_lob_piece')
     add_field('aux_lob_piece_tid', ptid)
-  
+
   if "index_name" in keywords and not type(keywords['index']) == dict:
     add_index_method_end(max_used_column_idx)
   else:

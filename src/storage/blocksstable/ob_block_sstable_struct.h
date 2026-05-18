@@ -238,7 +238,7 @@ struct ObColumnHeader
   void reuse() { memset(this, 0, sizeof(*this)); }
   bool is_valid() const
   {
-    return version_ == OB_COLUMN_HEADER_V1 
+    return version_ == OB_COLUMN_HEADER_V1
         && type_ >= 0
         && type_ < MAX_TYPE
         && obj_type_ < ObObjType::ObMaxType;

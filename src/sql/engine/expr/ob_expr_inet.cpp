@@ -241,7 +241,7 @@ int ObExprInetCommon::ip_to_str(ObString& ip_binary, bool& is_ip_format_invalid,
   char result[common::MAX_IP_ADDR_LENGTH] = {0};
   if (OB_UNLIKELY(OB_ISNULL(ip) || OB_ISNULL(result_ptr))) {
     ret = OB_ERR_UNEXPECTED;
-    LOG_WARN("ip or result is null", K(ret), K(ip), K(result));    
+    LOG_WARN("ip or result is null", K(ret), K(ip), K(result));
   }else if (sizeof(in_addr) == ip_binary.length()) {
     const unsigned char *ipv4_groups = (const unsigned char *) ip;
     sprintf((char *)result_ptr, "%d.%d.%d.%d", ipv4_groups[0], ipv4_groups[1], ipv4_groups[2], ipv4_groups[3]);

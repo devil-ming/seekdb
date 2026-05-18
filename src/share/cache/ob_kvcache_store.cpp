@@ -936,7 +936,7 @@ int ObKVCacheStore::print_tenant_memblock_info(ObDLink* head)
           if (OB_FAIL(hazptr_holder.protect(protect_success, handle))) {
             COMMON_LOG(WARN, "failed to protect mb_handle", KP(handle));
           } else if (protect_success) {
-            if (OB_FAIL(databuff_printf(buf, BUFLEN, ctx_pos, 
+            if (OB_FAIL(databuff_printf(buf, BUFLEN, ctx_pos,
                 "[CACHE-SYNC-WASH] status=%8d | policy=%8d | kv_cnt=%8ld | get_cnt=%8ld | score=%8lf |\n",
                 handle->get_status(),
                 handle->policy_,
@@ -1446,7 +1446,7 @@ void ObKVCacheStore::WashHeap::reset()
 }
 
 ObKVCacheStore::MBHandlePointerWashPool::MBHandlePointerWashPool()
-  : inited_(false), 
+  : inited_(false),
     total_count_(0),
     free_count_(0),
     buf_(nullptr),

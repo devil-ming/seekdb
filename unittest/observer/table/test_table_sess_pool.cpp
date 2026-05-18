@@ -109,7 +109,7 @@ int TestTableSessPool::create_and_add_node(ObTableApiCredential &cred)
         tmp_node = nullptr;
       }
     }
-    
+
   }
   return ret;
 }
@@ -120,7 +120,7 @@ TEST_F(TestTableSessPool, test_mgr_init)
   ASSERT_FALSE(mgr.is_inited_);
   ASSERT_EQ(nullptr, mgr.sess_pool_);
   ASSERT_EQ(nullptr, mgr.sess_elimination_task_.obj_pool_mgr_);
-  
+
   ASSERT_EQ(OB_SYS_TENANT_ID, MTL_ID());
   ASSERT_TRUE(TABLEAPI_OBJECT_POOL_MGR->is_inited_);
   ASSERT_EQ(nullptr, TABLEAPI_OBJECT_POOL_MGR->sess_pool_);

@@ -47,7 +47,7 @@ public:
   static void SetUpTestCase()
   {
     ASSERT_EQ(OB_SUCCESS, ObTimerService::get_instance().start());
-  } 
+  }
   static void TearDownTestCase()
   {
     ObTimerService::get_instance().stop();
@@ -77,7 +77,7 @@ TEST_F(TestObDataStoreDesc, test_static_desc)
   ObTableSchema table_schema;
   TestSchemaPrepare::prepare_schema(table_schema, 5);
   table_schema.compressor_type_ = ObCompressorType::ZSTD_1_3_8_COMPRESSOR;
-  
+
   const int64_t snapshot = 10000;
   share::SCN scn;
   scn.convert_for_tx(100);
@@ -203,7 +203,7 @@ TEST_F(TestObDataStoreDesc, gen_index_desc)
   const ObDataStoreDesc &data_store_desc = data_desc.get_desc();
 
   ASSERT_EQ(OB_SUCCESS, index_desc.gen_index_store_desc(data_store_desc));
-  
+
   const ObDataStoreDesc &index_data_desc = index_desc.get_desc();
   ASSERT_EQ(index_data_desc.get_row_column_count(), data_store_desc.get_rowkey_column_count() + 1);
   ASSERT_EQ(index_data_desc.get_col_desc_array().count(), data_store_desc.get_rowkey_column_count() + 1);

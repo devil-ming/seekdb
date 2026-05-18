@@ -206,7 +206,7 @@ struct ObKVCacheInfo
   TO_STRING_KV(K_(inst_key), K_(status));
 };
 
-struct ObKVCacheStoreMemblockInfo 
+struct ObKVCacheStoreMemblockInfo
 {
 public:
   ObKVCacheStoreMemblockInfo()
@@ -226,7 +226,7 @@ public:
   bool is_valid() const { return score_ >= 0; }
   TO_STRING_KV(K_(ref_count), K_(using_status), K_(policy), K_(kv_cnt), K_(get_cnt),
           K_(recent_get_cnt), K_(score), K_(align_size), KP_(memblock_ptr));
-public: 
+public:
   int64_t ref_count_;
   int64_t using_status_;
   int64_t policy_;

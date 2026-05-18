@@ -322,4 +322,3 @@ bool ObKVMemBlockHandle::retire()
 
 }//end namespace common
 }//end namespace oceanbase
-

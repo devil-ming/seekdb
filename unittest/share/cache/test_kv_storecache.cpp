@@ -45,7 +45,7 @@ public:
   static void SetUpTestCase()
   {
     ASSERT_EQ(OB_SUCCESS, ObTimerService::get_instance().start());
-  } 
+  }
   static void TearDownTestCase()
   {
     ObTimerService::get_instance().stop();
@@ -1190,7 +1190,7 @@ TEST_F(TestKVCache, hazard_pointer) {
   ObKVCacheInstHandle inst_handle;
   ObKVGlobalCache::get_instance().insts_.get_cache_inst(inst_key, inst_handle);
   ObKVCacheStore &store = ObKVGlobalCache::get_instance().store_;
-  
+
 
   key.v_ = 900;
   key.tenant_id_ = tenant_id_;
@@ -1259,7 +1259,7 @@ TEST_F(TestKVCache, cache_handle_pin) {
   ObKVCacheInstHandle inst_handle;
   ObKVGlobalCache::get_instance().insts_.get_cache_inst(inst_key, inst_handle);
   ObKVCacheStore &store = ObKVGlobalCache::get_instance().store_;
-  
+
   ret = cache.init("test");
   ASSERT_EQ(OB_SUCCESS, ret);
 
@@ -1424,7 +1424,7 @@ void check(const TestList& list)
           if (size == list.get_size() - 1) {
             ASSERT_TRUE(fast == list.get_tail());
             break;
-          } 
+          }
           ASSERT_TRUE(fast->get_next() != nullptr);
         }
         {
@@ -1433,7 +1433,7 @@ void check(const TestList& list)
           if (size == list.get_size() - 1) {
             ASSERT_TRUE(fast == list.get_tail());
             break;
-          } 
+          }
           ASSERT_TRUE(fast->get_next() != nullptr);
         }
         ASSERT_TRUE(slow != fast);

@@ -54,7 +54,7 @@ public:
             !id_meta_[service_type].latest_log_ts_.is_valid());
   }
   OB_UNIS_VERSION(1);
-public: 
+public:
   int64_t count_;
   ObIDMeta id_meta_[TestObAllIDMeta::type_count];
 };
@@ -147,7 +147,7 @@ TEST_F(TestObAllIDMeta, test_deserialize_from_lower_version)
   all_id_meta1.init();
   ObAllIDMetaLower all_id_meta2;
   all_id_meta2.init();
-  
+
   for(int i=0; i<TestObAllIDMeta::type_count; i++) {
     ASSERT_EQ(true, mock_all_id_meta1.is_invalid(i));
     ASSERT_EQ(true, mock_all_id_meta2.is_invalid(i));
