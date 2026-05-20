@@ -1644,9 +1644,9 @@
 /deps/oblib/src/lib/thread/thread_define.h @fyy280124 @yuanqi.xhf @xiaoshi.xjl
 /deps/oblib/src/lib/timezone/ob_oracle_format_models.cpp @jim.wjh @dachuan.sdc @bin.lb @huangweixiang.hwx
 /deps/oblib/src/lib/timezone/ob_oracle_format_models.h @jim.wjh @dachuan.sdc @bin.lb @huangweixiang.hwx
-/deps/oblib/src/lib/trace/ob_trace.cpp @yuanqi.xhf @xiaoshi.xjl
-/deps/oblib/src/lib/trace/ob_trace.h @yuanqi.xhf @xiaoshi.xjl
-/deps/oblib/src/lib/trace/ob_trace_def.h @xiaoyi.xy @yuanqi.xhf @xiaoshi.xjl
+/deps/oblib/src/lib/trace/ob_trace.cpp @yuanqi.xhf @xiaoshi.xjl @nijia.nj
+/deps/oblib/src/lib/trace/ob_trace.h @yuanqi.xhf @xiaoshi.xjl @nijia.nj
+/deps/oblib/src/lib/trace/ob_trace_def.h @xiaoyi.xy @yuanqi.xhf @nijia.nj
 /deps/oblib/src/lib/utility/ob_edit_distance.h @peihan.dph @bin.lb @xiaoyi.xy
 /deps/oblib/src/lib/utility/ob_tracepoint.cpp @jianming.cjq @yongle.xh @chaser.ch
 /deps/oblib/src/lib/utility/ob_tracepoint.h @jianming.cjq @yongle.xh @chaser.ch
