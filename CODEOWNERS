@@ -1,5 +1,5 @@
 * @yuanqi.xhf @nijia.nj @xianlin.lh
-/**/CMakeLists.txt @jiyu.hyx
+/**/CMakeLists.txt @jiyu.hyx @huaixin.lmy
 /**/README @yuanqi.xhf @nijia.nj @xianlin.lh
 /.devcontainer/**/* @rongfeng.frf @wangyunlai.wyl
 /.secignore* @dingzengxian.dzx @dingyixuan.dyx @hengtang.zj @jiyu.hyx
@@ -51,13 +51,13 @@
 /close_modules/license/**/* @gengli.wzy @jingyan.kfy
 /close_modules/xml/** @gehao.wh @ht353245 @yuanzhi.zy
 /close_modules/xml/**/* @gehao.wh @ht353245 @yuanzhi.zy
-/cmake/** @jiyu.hyx
-/cmake/**/* @jiyu.hyx
-/cmake/script/**/* @jiyu.hyx
+/cmake/** @jiyu.hyx @huaixin.lmy
+/cmake/**/* @jiyu.hyx @huaixin.lmy
+/cmake/script/**/* @jiyu.hyx @huaixin.lmy
 /include/** @wangzelin.wzl
 /include/**/* @wangzelin.wzl
 /deps/easy/**/* @fangwu.lcc @yuanqi.xhf @nijia.nj @xiaoshi.xjl
-/deps/init/**/* @rongfeng.frf @wangzelin.wzl @jiyu.hyx
+/deps/init/**/* @rongfeng.frf @wangzelin.wzl @jiyu.hyx @huaixin.lmy
 /deps/init/oceanbase.* @rongfeng.frf @wangzelin.wzl @jiyu.hyx @dingzengxian.dzx
 /deps/oblib/**/* @nijia.nj @yuanqi.xhf @xiaoshi.xjl
 /deps/oblib/src/common/errsim_module/**/* @muwei.ym @yongle.xh
@@ -495,6 +495,7 @@
 /test/static/lost_error/** @niyuhang.nyh @gy389672
 /test/vostest/test_suite/**/* @nijia.nj @fyy280124 @yuanqi.xhf @xiaoshi.xjl
 /tools/**/* @yuanqi.xhf @wanhong.wwh @msy164651 @dachuan.sdc @jim.wjh
+/tools/ocp/**/* @jiyu.hyx @huaixin.lmy
 /tools/agentserver/**/* @muwei.ym @yongle.xh
 /tools/deploy/**/* @bianwen.bian @niyuhang.nyh @rongfeng.frf
 /tools/deploy/obd.sh.opensource @gaoyunshan.gys @rongfeng.frf
@@ -1483,7 +1484,7 @@
 /CONTRIBUTING.md @rongfeng.frf @huhaosheng.hhs
 /README.md @rongfeng.frf @huhaosheng.hhs @wangyunlai.wyl
 /README_CN.md @rongfeng.frf @huhaosheng.hhs @wangyunlai.wyl
-/build.sh @jiyu.hyx
+/build.sh @jiyu.hyx @huaixin.lmy
 /build.ps1 @wangzelin.wzl
 /close_modules/audit_security/observer/virtual_table/ob_all_virtual_audit_action.cpp @sean.yyj @wanhong.wwh @msy164651 @jim.wjh
 /close_modules/audit_security/observer/virtual_table/ob_all_virtual_audit_operation.cpp @sean.yyj @wanhong.wwh @msy164651 @jim.wjh
@@ -1543,7 +1544,7 @@
 /close_modules/tde_security/share/ob_encrypt_kms.h @sean.yyj @jim.wjh
 /close_modules/tde_security/share/ob_encryption_util.cpp @sean.yyj @jim.wjh @weixiaoxian.wxx
 /close_modules/tde_security/storage/blocksstable/ob_micro_block_encryption.cpp @dachuan.sdc @bin.lb @chaser.ch
-/cmake/script/do_bolt_opt @shanyan.g @jiyu.hyx
+/cmake/script/do_bolt_opt @shanyan.g @jiyu.hyx @huaixin.lmy
 /deps/oblib/src/common/log/ob_log_constants.h @yuzhong.zhao
 /deps/oblib/src/common/ob_file_common_header.cpp @binifei.bnf @quanwei.wqw @donglou.zl
 /deps/oblib/src/common/ob_file_common_header.h @binifei.bnf @quanwei.wqw @donglou.zl
