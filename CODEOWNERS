@@ -1637,8 +1637,7 @@
 /deps/oblib/src/lib/restore/ob_storage_info.h @donglou.zl @quanwei.wqw @shifangdan.sfd
 /deps/oblib/src/lib/restore/ob_storage_obdal_base.cpp @hanyaodong.hyd @quanwei.wqw @shifangdan.sfd
 /deps/oblib/src/lib/restore/ob_storage_obdal_base.h @hanyaodong.hyd @quanwei.wqw @shifangdan.sfd
-/deps/oblib/src/lib/restore/ob_storage_s3_base.cpp @donglou.zl @quanwei.wqw @shifangdan.sfd
-/deps/oblib/src/lib/restore/ob_storage_s3_base.h @donglou.zl @quanwei.wqw @shifangdan.sfd
+
 /deps/oblib/src/lib/task/ob_timer_monitor.cpp @jingyan.kfy @handora.qc @yanran.hfs
 /deps/oblib/src/lib/task/ob_timer_monitor.h @jingyan.kfy @handora.qc @yanran.hfs
 /deps/oblib/src/lib/thread/ob_thread_lease.h @wanhong.wwh @yuanqi.xhf @xiaoshi.xjl
@@ -1683,8 +1682,6 @@
 /deps/oblib/unittest/lib/restore/test_object_storage.cpp @donglou.zl @quanwei.wqw @shifangdan.sfd
 /deps/oblib/unittest/lib/restore/test_object_storage.h @donglou.zl @quanwei.wqw @shifangdan.sfd
 /deps/oblib/unittest/lib/restore/test_storage_info.cpp @donglou.zl @quanwei.wqw @shifangdan.sfd
-/deps/oblib/unittest/lib/restore/test_storage_s3.cpp @donglou.zl @quanwei.wqw @shifangdan.sfd
-/deps/oblib/unittest/lib/restore/test_storage_s3.h @donglou.zl @quanwei.wqw @shifangdan.sfd
 /deps/oblib/unittest/lib/trace/test_trace.cpp @xiaoshi.xjl @yuanqi.xhf
 /mittest/CMakeLists.txt @cxf262476 @jingyan.kfy @xianlin.lh
 /mittest/mtlenv/storage/blocksstable/test_cg_sstable.cpp @saitong.zst
@@ -2087,12 +2084,10 @@
 /src/observer/virtual_table/ob_all_virtual_sql_plan.h @zhenling.zzg @wuyuming.wym @link.zt
 /src/observer/virtual_table/ob_all_virtual_sql_stat.cpp @roland.qk @zhangyiqiang.zyq
 /src/observer/virtual_table/ob_all_virtual_sql_stat.h @roland.qk @zhangyiqiang.zyq
-/src/observer/virtual_table/ob_all_virtual_ss_local_cache_info.cpp @shifangdan.sfd @donglou.zl @quanwei.wqw
-/src/observer/virtual_table/ob_all_virtual_ss_local_cache_info.h @shifangdan.sfd @donglou.zl @quanwei.wqw
-/src/observer/virtual_table/ob_all_virtual_storage_cache_task.cpp @binifei.bnf @shifangdan.sfd @quanwei.wqw
-/src/observer/virtual_table/ob_all_virtual_storage_cache_task.h @binifei.bnf @shifangdan.sfd @quanwei.wqw
-/src/observer/virtual_table/ob_all_virtual_storage_meta_memory_status.cpp @yuzhong.zhao
-/src/observer/virtual_table/ob_all_virtual_storage_meta_memory_status.h @yuzhong.zhao
+/src/observer/virtual_table/ob_all_virtual_storage_cache_task.cpp @binifei.bnf @baonian.wcx @shifangdan.sfd @quanwei.wqw
+/src/observer/virtual_table/ob_all_virtual_storage_cache_task.h @binifei.bnf @baonian.wcx @shifangdan.sfd @quanwei.wqw
+/src/observer/virtual_table/ob_all_virtual_storage_meta_memory_status.cpp @yunshan.tys @jiahua.cjh @yuzhong.zhao
+/src/observer/virtual_table/ob_all_virtual_storage_meta_memory_status.h @yunshan.tys @jiahua.cjh @yuzhong.zhao
 /src/observer/virtual_table/ob_all_virtual_sys_event.cpp @roland.qk @wanhong.wwh @msy164651 @zhangyiqiang.zyq
 /src/observer/virtual_table/ob_all_virtual_sys_event.h @roland.qk @wanhong.wwh @msy164651 @zhangyiqiang.zyq
 /src/observer/virtual_table/ob_all_virtual_sys_parameter_stat.cpp @fyy280124 @yuanqi.xhf @nijia.nj
@@ -6221,8 +6216,6 @@ src/storage/blocksstable/ob_block_writer_concurrent_guard.h @zs475329 @saitong.z
 /unittest/rootserver/test_ob_backup_task_scheduler.cpp @yongle.xh @wangxiaohui.wxh @yangyi.yyy
 /unittest/rootserver/test_rs_reentrant_thread.cpp @quanwei.wqw @wanhong.wwh
 /unittest/rootserver/test_tenant_all_zone_merge_strategy.cpp @donglou.zl @quanwei.wqw @wanhong.wwh
-/unittest/share/backup/test_backup_access_s3.cpp @shifangdan.sfd @quanwei.wqw @donglou.zl
-/unittest/share/backup/test_backup_access_s3.h @shifangdan.sfd @quanwei.wqw @donglou.zl
 /unittest/share/cache/test_recycle_multi_kvcache.cpp @zk250686 @jingyan.kfy
 /unittest/share/cache/test_vtable_event_recycle_buffer.cpp @zk250686 @jingyan.kfy
 /unittest/share/client_feedback/test_ob_feedback_proxy_utils.cpp @yangyifei.yyf @cxf262476 @xiaoqiu.wy
